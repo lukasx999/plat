@@ -15,7 +15,6 @@ class Player {
     Vector2 m_position;
     Vector2 m_velocity;
     Vector2 m_acceleration;
-    Vector2 m_counter;
     static constexpr int m_size = 100;
 
 public:
@@ -25,10 +24,28 @@ public:
         , m_acceleration(0, 0)
     { }
 
+    [[nodiscard]] bool is_on_floor() const {
+        return m_position.y == HEIGHT-m_size/2.0f;
+    }
+
+    void draw() const {
+        DrawRectanglePro({ m_position.x, m_position.y, m_size, m_size }, { m_size/2.0f, m_size/2.0f }, 0, BLUE);
+        DrawCircleV(m_position, 10, RED);
+        DrawLineEx(m_position, Vector2Add(m_position, Vector2Scale(m_velocity, 100.0f)), 5, RED);
+        DrawLineEx(m_position, Vector2Add(m_position, Vector2Scale(m_acceleration, 100.0f)), 5, GREEN);
+    }
+
     void update() {
-        // m_acceleration = Vector2Add(m_acceleration, m_counter);
-        m_velocity     = Vector2Add(m_velocity, m_acceleration);
-        m_position     = Vector2Add(m_position, m_velocity);
+        m_velocity = Vector2Add(m_velocity, m_acceleration);
+        m_position = Vector2Add(m_position, m_velocity);
+
+        if (is_on_floor()) {
+            m_velocity.y = 0;
+            m_acceleration.y = 0;
+        } else {
+            // gravity
+            m_acceleration.y += 1;
+        }
 
         m_position.y = Clamp(m_position.y, 0, HEIGHT-m_size/2.0f);
         m_position.x = Clamp(m_position.x, 0, WIDTH-m_size/2.0f);
@@ -39,19 +56,19 @@ public:
         std::println("m_acceleration: {}, {}", m_acceleration.x, m_acceleration.y);
     }
 
-    void draw() const {
-        DrawRectanglePro({ m_position.x, m_position.y, m_size, m_size }, { m_size/2.0f, m_size/2.0f }, 0, BLUE);
-        DrawCircleV(m_position, 10, RED);
-        DrawLineEx(m_position, Vector2Add(m_position, Vector2Scale(m_velocity, 100.0f)), 5, RED);
-        DrawLineEx(m_position, Vector2Add(m_position, Vector2Scale(m_acceleration, 100.0f)), 5, GREEN);
-    }
-
     void jump() {
-        m_acceleration.y -= 1;
+        m_acceleration.y = -10;
     }
 
-    void apply_force() {
-        m_acceleration.y -= 5;
+    void move(Direction dir) {
+        switch (dir) {
+            case Direction::Right:
+                m_acceleration.x += 0.01;
+            break;
+            case Direction::Left:
+                m_acceleration.x -= 0.01;
+            break;
+        }
     }
 
 };
@@ -59,7 +76,7 @@ public:
 int main(void) {
 
     SetTraceLogLevel(LOG_ERROR);
-    SetTargetFPS(6);
+    SetTargetFPS(60);
     InitWindow(WIDTH, HEIGHT, "2D Game");
 
     Player player;
@@ -71,12 +88,17 @@ int main(void) {
             player.draw();
             player.update();
 
-            if (IsKeyDown(KEY_SPACE))
+            if (IsKeyPressed(KEY_SPACE)) {
+                std::println("jump");
                 player.jump();
+            }
 
+            if (IsKeyDown(KEY_D)) {
+                player.move(Direction::Right);
+            }
 
-            if (IsKeyPressed(KEY_J)) {
-                player.apply_force();
+            if (IsKeyDown(KEY_A)) {
+                player.move(Direction::Left);
             }
 
         }
