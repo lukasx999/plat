@@ -1,10 +1,37 @@
 #include <print>
+#include <vector>
+#include <iostream>
+#include <array>
 
 #include <raylib.h>
 #include <raymath.h>
 
 constexpr auto WIDTH = 1600;
 constexpr auto HEIGHT = 900;
+constexpr bool DEBUG = true;
+
+
+struct Item {
+    const Rectangle m_hitbox;
+    const Color m_color;
+    const bool m_is_blocking;
+
+    Item(Rectangle hitbox, Color color, bool is_blocking)
+        : m_hitbox(hitbox)
+        , m_color(color)
+        , m_is_blocking(is_blocking)
+    { }
+
+};
+
+void render_environment(std::span<Item> items) {
+    for (auto &item : items) {
+        DrawRectangleRec(item.m_hitbox, item.m_color);
+    }
+}
+
+
+
 
 enum class Direction {
     Right,
@@ -30,15 +57,22 @@ public:
         return m_position.y >= HEIGHT-m_size/2.0f;
     }
 
-    void draw() const {
-        DrawRectanglePro(
-            { m_position.x, m_position.y, m_size, m_size },
-            { m_size/2.0f, m_size/2.0f },
-            0,
-            BLUE
-        );
-        DrawCircleV(m_position, 10, RED);
+    [[nodiscard]] Rectangle get_hitbox() const {
+        return { m_position.x, m_position.y, m_size, m_size };
     }
+
+    void draw() const {
+        auto hitbox = get_hitbox();
+        DrawRectanglePro(hitbox, { hitbox.width/2.0f, hitbox.height/2.0f }, 0, BLUE);
+        DrawCircleV(m_position, 10, RED);
+
+        if constexpr (DEBUG) {
+            DrawText(std::format("pos: x: {}, y {}:", trunc(m_position.x), trunc(m_position.y)).c_str(), 0, 0, 50, WHITE);
+            DrawText(std::format("speed: {}:", trunc(m_speed)).c_str(), 0, 50, 50, WHITE);
+        }
+
+    }
+
 
     void update(float dt) {
         m_position.y = Clamp(m_position.y, 0, HEIGHT-m_size/2.0f);
@@ -61,6 +95,21 @@ public:
         m_speed = -m_jumping_speed;
     }
 
+    void resolve_collisions(std::span<Item> items) {
+
+        for (auto &item : items) {
+            const bool collision = CheckCollisionRecs(get_hitbox(), item.m_hitbox) ;
+
+            if (collision && item.m_is_blocking) {
+
+                DrawText("collision", 0, 100, 50, RED);
+
+                m_speed = 0;
+            }
+        }
+
+    }
+
     void move(Direction dir, float dt) {
         switch (dir) {
             case Direction::Right:
@@ -74,11 +123,18 @@ public:
 
 };
 
+
 int main(void) {
 
     SetTraceLogLevel(LOG_ERROR);
     SetTargetFPS(60);
     InitWindow(WIDTH, HEIGHT, "2D Game");
+
+    std::array items {
+        Item({ 0, 0, WIDTH, HEIGHT }, DARKGRAY, false),
+        Item({ 300, 700, 500, 100 }, RED, true),
+        Item({ 1100, 800, 500, 100 }, GREEN, true),
+    };
 
     Player player;
 
@@ -86,6 +142,8 @@ int main(void) {
         BeginDrawing();
         {
             ClearBackground(BLACK);
+
+            render_environment(items);
 
             if (IsKeyPressed(KEY_SPACE)) {
                 player.jump();
@@ -99,7 +157,7 @@ int main(void) {
                 player.move(Direction::Left, GetFrameTime());
             }
 
-            DrawFPS(0, 0);
+            player.resolve_collisions(items);
             player.update(GetFrameTime());
             player.draw();
 
