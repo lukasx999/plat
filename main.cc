@@ -41,7 +41,6 @@ class Player {
     Vector2 m_position;
     bool m_is_jumping;
     float m_speed = 0;
-    bool m_is_colliding = false;
     static constexpr int m_size = 100;
     static constexpr int m_gravity = 1200;
     static constexpr float m_movement_speed = 600;
@@ -88,6 +87,7 @@ public:
 
         if (is_grounded()) {
             m_is_jumping = false;
+            m_speed = 0;
         } else {
             m_speed += m_gravity * dt;
         }
@@ -102,7 +102,6 @@ public:
 
     void resolve_collisions(std::span<Item> items) {
 
-        bool flag = false;
         for (auto &item : items) {
             const bool collision = CheckCollisionRecs(get_hitbox(), item.m_hitbox);
 
@@ -112,20 +111,37 @@ public:
                     DrawText("collision", 0, 150, 50, RED);
                 }
 
-                // m_is_colliding = true;
-                // flag = true;
-            }
-        }
+                const auto diffyu = (m_position.y + m_size/2.0f) - item.m_hitbox.y;
+                const auto diffyd = (item.m_hitbox.y + item.m_hitbox.height) - (m_position.y - m_size/2.0f);
+                const auto diffxl = (m_position.x + m_size/2.0f) - item.m_hitbox.x;
+                const auto diffxr = (item.m_hitbox.x + item.m_hitbox.width) - (m_position.x - m_size/2.0f);
 
-        if (!flag) {
-            m_is_colliding = false;
+                // handling smallest diff first
+
+                if (diffyu < diffyd && diffyu < diffxr && diffyu < diffyd && diffyu > 0) {
+                    m_position.y -= diffyu;
+                }
+
+                if (diffyd < diffyu && diffyd < diffxl && diffyd < diffxr && diffyd > 0) {
+                    m_position.y += diffyd;
+                }
+
+                if (diffxl < diffxr && diffxl > 0) {
+                    m_position.x -= diffxl;
+                }
+
+                if (diffxr < diffxl && diffxr > 0) {
+                    m_position.x += diffxr;
+                }
+
+
+
+            }
         }
 
     }
 
     void move(Direction dir, float dt) {
-
-        if (m_is_colliding) return;
 
         switch (dir) {
             case Direction::Right:
@@ -150,6 +166,7 @@ int main(void) {
         Item({ 0,    0,   WIDTH, HEIGHT }, DARKGRAY, false),
         Item({ 300,  600, 500,   100 },    RED,      true),
         Item({ 1100, 800, 500,   100 },    GREEN,    true),
+        Item({ 0, 800, 100,   100 },    YELLOW,    true),
     };
 
     Player player;
