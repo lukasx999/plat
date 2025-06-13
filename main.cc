@@ -42,7 +42,7 @@ class Player {
     Vector2 m_position;
     bool m_is_jumping;
     float m_speed = 0;
-    bool m_is_colliding = false;
+    bool m_is_grounded = false;
     static constexpr int m_size = 100;
     static constexpr int m_gravity = 1200;
     static constexpr float m_movement_speed = 600;
@@ -50,13 +50,9 @@ class Player {
 
 public:
     Player()
-        : m_position(WIDTH/2.0f, HEIGHT - m_size/2.0f - FLOOR_HEIGHT)
-        , m_is_jumping(false)
+        : m_position(WIDTH/2.0f, HEIGHT - m_size/2.0f - FLOOR_HEIGHT - 100)
+        , m_is_jumping(true)
     { }
-
-    [[nodiscard]] bool is_grounded() const {
-        return m_position.y >= HEIGHT-m_size/2.0f;
-    }
 
     [[nodiscard]] Rectangle get_hitbox() const {
         return {
@@ -75,6 +71,7 @@ public:
             DrawText(std::format("pos: x: {}, y {}:", trunc(m_position.x), trunc(m_position.y)).c_str(), 0, 0, 50, WHITE);
             DrawText(std::format("speed: {}:", trunc(m_speed)).c_str(), 0, 50, 50, WHITE);
             DrawText(std::format("jumping: {}", m_is_jumping ? "yes" : "no").c_str(), 0, 100, 50, WHITE);
+            DrawText(std::format("grounded: {}", m_is_grounded ? "yes" : "no").c_str(), 0, 150, 50, WHITE);
         }
 
     }
@@ -87,7 +84,7 @@ public:
             m_position.y += m_speed * dt;
         }
 
-        if (is_grounded()) {
+        if (m_is_grounded) {
             m_is_jumping = false;
             m_speed = 0;
 
@@ -97,43 +94,45 @@ public:
 
     }
 
-    void resolve_collisions(std::span<Item> items) {
+    void resolve_collisions(std::span<Item> items, float dt) {
+
+        m_is_grounded = false;
 
         for (auto &item : items) {
-            const bool collision = CheckCollisionRecs(get_hitbox(), item.m_hitbox);
 
-            if (collision && item.m_is_blocking) {
-
-                if constexpr (DEBUG) {
-                    DrawText("collision", 0, 150, 50, RED);
-                }
+            if (item.m_is_blocking) {
 
                 const auto diffyu = (m_position.y + m_size/2.0f) - item.m_hitbox.y;
                 const auto diffyd = (item.m_hitbox.y + item.m_hitbox.height) - (m_position.y - m_size/2.0f);
                 const auto diffxl = (m_position.x + m_size/2.0f) - item.m_hitbox.x;
                 const auto diffxr = (item.m_hitbox.x + item.m_hitbox.width) - (m_position.x - m_size/2.0f);
 
-                // handling smallest diff first
+                const bool grounded = diffyu + m_speed*dt > 0;
 
-                if (diffyu < diffyd && diffyu < diffxr && diffyu < diffyd && diffyu > 0) {
-                    m_position.y -= diffyu;
-                    return;
+                if (grounded && diffxl > 0 && diffxr > 0 && diffyd > 0) {
+                    m_is_grounded = true;
                 }
 
-                if (diffyd < diffyu && diffyd < diffxl && diffyd < diffxr && diffyd > 0) {
-                    m_position.y += diffyd;
-                    return;
-                }
-
-                if (diffxl < diffxr && diffxl > 0) {
-                    m_position.x -= diffxl;
-                    return;
-                }
-
-                if (diffxr < diffxl && diffxr > 0) {
-                    m_position.x += diffxr;
-                    return;
-                }
+                // if (diffyu < diffyd && diffyu < diffxr && diffyu < diffyd && diffyu > 0) {
+                //     m_position.y -= diffyu;
+                //     // m_is_grounded = true;
+                //     return;
+                // }
+                //
+                // if (diffyd < diffyu && diffyd < diffxl && diffyd < diffxr && diffyd > 0) {
+                //     m_position.y += diffyd;
+                //     return;
+                // }
+                //
+                // if (diffxl < diffxr && diffxl > 0) {
+                //     m_position.x -= diffxl;
+                //     return;
+                // }
+                //
+                // if (diffxr < diffxl && diffxr > 0) {
+                //     m_position.x += diffxr;
+                //     return;
+                // }
 
 
 
@@ -144,6 +143,7 @@ public:
 
     void jump() {
         if (m_is_jumping) return;
+        m_is_grounded = false;
         m_is_jumping = true;
         m_speed = -m_jumping_speed;
     }
@@ -175,7 +175,8 @@ int main(void) {
     std::array items {
         bg,
         floor,
-        Item({ 300, 500, 300, 100 }, RED, true)
+        Item({ 300, 500, 300, 100 }, RED, true),
+        Item({ 1100, 600, 300, 100 }, GREEN, true)
     };
 
     Player player;
@@ -199,7 +200,7 @@ int main(void) {
                 player.move(Direction::Left, GetFrameTime());
             }
 
-            player.resolve_collisions(items);
+            player.resolve_collisions(items, GetFrameTime());
             player.update(GetFrameTime());
             player.draw();
 
