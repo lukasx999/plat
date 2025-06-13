@@ -98,7 +98,7 @@ public:
                 const float diffxl = (m_position.x + m_size/2.0f) - hitbox.x;
                 const float diffxr = (hitbox.x + hitbox.width) - (m_position.x - m_size/2.0f);
 
-                // BUG: bouncing effect when landing
+                // BUG: bouncing effect when landing diagonally
 
                 const bool grounded = diffyu + m_speed*dt > 0;
 
