@@ -6,9 +6,10 @@
 #include <raylib.h>
 #include <raymath.h>
 
-constexpr auto WIDTH = 1600;
-constexpr auto HEIGHT = 900;
-constexpr bool DEBUG = true;
+static constexpr auto WIDTH = 1600;
+static constexpr auto HEIGHT = 900;
+static constexpr bool DEBUG = true;
+static constexpr int FLOOR_HEIGHT = 200;
 
 struct Item {
     const Rectangle m_hitbox;
@@ -41,6 +42,7 @@ class Player {
     Vector2 m_position;
     bool m_is_jumping;
     float m_speed = 0;
+    bool m_is_colliding = false;
     static constexpr int m_size = 100;
     static constexpr int m_gravity = 1200;
     static constexpr float m_movement_speed = 600;
@@ -48,7 +50,7 @@ class Player {
 
 public:
     Player()
-        : m_position(WIDTH/2.0f, HEIGHT-m_size/2.0f)
+        : m_position(WIDTH/2.0f, HEIGHT - m_size/2.0f - FLOOR_HEIGHT)
         , m_is_jumping(false)
     { }
 
@@ -88,16 +90,11 @@ public:
         if (is_grounded()) {
             m_is_jumping = false;
             m_speed = 0;
+
         } else {
             m_speed += m_gravity * dt;
         }
 
-    }
-
-    void jump() {
-        if (m_is_jumping) return;
-        m_is_jumping = true;
-        m_speed = -m_jumping_speed;
     }
 
     void resolve_collisions(std::span<Item> items) {
@@ -120,18 +117,22 @@ public:
 
                 if (diffyu < diffyd && diffyu < diffxr && diffyu < diffyd && diffyu > 0) {
                     m_position.y -= diffyu;
+                    return;
                 }
 
                 if (diffyd < diffyu && diffyd < diffxl && diffyd < diffxr && diffyd > 0) {
                     m_position.y += diffyd;
+                    return;
                 }
 
                 if (diffxl < diffxr && diffxl > 0) {
                     m_position.x -= diffxl;
+                    return;
                 }
 
                 if (diffxr < diffxl && diffxr > 0) {
                     m_position.x += diffxr;
+                    return;
                 }
 
 
@@ -139,6 +140,12 @@ public:
             }
         }
 
+    }
+
+    void jump() {
+        if (m_is_jumping) return;
+        m_is_jumping = true;
+        m_speed = -m_jumping_speed;
     }
 
     void move(Direction dir, float dt) {
@@ -162,11 +169,13 @@ int main(void) {
     SetTargetFPS(60);
     InitWindow(WIDTH, HEIGHT, "2D Game");
 
+    Item floor({ 0, HEIGHT-FLOOR_HEIGHT, WIDTH, FLOOR_HEIGHT }, GRAY, true);
+    Item bg({ 0, 0, WIDTH, HEIGHT }, DARKGRAY, false);
+
     std::array items {
-        Item({ 0,    0,   WIDTH, HEIGHT }, DARKGRAY, false),
-        Item({ 300,  600, 500,   100 },    RED,      true),
-        Item({ 1100, 800, 500,   100 },    GREEN,    true),
-        Item({ 0, 800, 100,   100 },    YELLOW,    true),
+        bg,
+        floor,
+        Item({ 300, 500, 300, 100 }, RED, true)
     };
 
     Player player;
