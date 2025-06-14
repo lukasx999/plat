@@ -1,6 +1,5 @@
 #include <functional>
 #include <print>
-#include <vector>
 #include <array>
 
 #include <raylib.h>
@@ -8,7 +7,8 @@
 
 static constexpr auto WIDTH = 1600;
 static constexpr auto HEIGHT = 900;
-static constexpr bool DEBUG = true;
+#define DEBUG
+#undef CONST_FT
 
 struct Item {
     const Rectangle m_hitbox;
@@ -46,8 +46,8 @@ class Player {
 
 public:
     Player(std::function<float()> get_dt)
-        : m_position(WIDTH/2.0f, HEIGHT - m_size/2.0f - 300)
-        , m_is_jumping(true)
+        : m_position(WIDTH/2.0f, HEIGHT - m_size/2.0f - 500)
+        , m_is_jumping(false)
         , m_get_dt(get_dt)
     { }
 
@@ -59,38 +59,36 @@ public:
         DrawRectangleRec(get_hitbox(), DARKBLUE);
         DrawCircleV(m_position, 10, RED);
 
-        if constexpr (DEBUG) {
-            DrawText(std::format("pos: x: {}, y: {}", trunc(m_position.x), trunc(m_position.y)).c_str(), 0, 0, 50, WHITE);
-            DrawText(std::format("speed: {}:", trunc(m_speed)).c_str(), 0, 50, 50, WHITE);
-            DrawText(std::format("jumping: {}", m_is_jumping ? "yes" : "no").c_str(), 0, 100, 50, WHITE);
-            DrawText(std::format("grounded: {}", m_is_grounded ? "yes" : "no").c_str(), 0, 150, 50, WHITE);
-        }
+#ifdef DEBUG
+        DrawText(std::format("pos: x: {}, y: {}", trunc(m_position.x), trunc(m_position.y)).c_str(), 0, 0, 50, WHITE);
+        DrawText(std::format("speed: {}:", trunc(m_speed)).c_str(), 0, 50, 50, WHITE);
+        DrawText(std::format("jumping: {}", m_is_jumping ? "yes" : "no").c_str(), 0, 100, 50, WHITE);
+        DrawText(std::format("grounded: {}", m_is_grounded ? "yes" : "no").c_str(), 0, 150, 50, WHITE);
+#endif // DEBUG
 
     }
 
     void update() {
-        const float dt = m_get_dt();
 
         if (m_is_grounded) {
             m_is_jumping = false;
             m_speed = 0;
 
         } else {
-            m_speed += m_gravity * dt;
-            m_position.y += m_speed * dt;
+            m_speed += m_gravity * m_get_dt();
+            m_position.y += m_speed * m_get_dt();
+
         }
 
     }
 
     void resolve_collisions(std::span<const Item> items) {
-        const float dt = m_get_dt();
 
         m_is_grounded = false;
 
         for (auto &item : items) {
 
             if (item.m_is_blocking) {
-
                 const auto hitbox = item.m_hitbox;
 
                 const float diffyu = (m_position.y + m_size/2.0f) - hitbox.y;
@@ -98,12 +96,11 @@ public:
                 const float diffxl = (m_position.x + m_size/2.0f) - hitbox.x;
                 const float diffxr = (hitbox.x + hitbox.width) - (m_position.x - m_size/2.0f);
 
-                // BUG: bouncing effect when landing diagonally
-
-                const bool grounded = diffyu + m_speed*dt > 0;
+                const bool grounded = diffyu + m_speed * m_get_dt() > 0;
 
                 if (grounded && diffxl > 0 && diffxr > 0 && diffyd > 0) {
                     m_is_grounded = true;
+                    m_position.y = hitbox.y - m_size/2.0f + 1;
                 }
 
                 // if (diffyu < diffyd && diffyu < diffxr && diffyu < diffyd && diffyu > 0) {
@@ -183,7 +180,11 @@ int main() {
         Item({ 1100, 600, 300, 100 }, GREEN, true)
     };
 
+#ifdef CONST_FT
+    Player player([] { return 0.005; });
+#else
     Player player(GetFrameTime);
+#endif // CONST_FT
 
     while (!WindowShouldClose()) {
         BeginDrawing();
