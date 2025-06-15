@@ -34,7 +34,6 @@ void draw_environment(std::span<const Item> items) {
 
 
 
-
 class Player {
     Vector2 m_position;
     bool m_is_jumping;
@@ -88,37 +87,39 @@ public:
         m_is_grounded = false;
 
         for (auto &item : items) {
-
-            const auto dt = m_speed * m_get_dt();
-            const auto hitbox = item.m_hitbox;
-            const bool collision = CheckCollisionRecs(get_hitbox(), { hitbox.x-dt, hitbox.y-dt, hitbox.width+dt, hitbox.height+dt });
-
-            std::println("name: {}", item.m_name);
-
             if (item.m_is_blocking) {
-                const Rectangle left = { hitbox.x, hitbox.y, hitbox.x, hitbox.height };
 
-                DrawRectangleRec(left, PURPLE);
+                const auto hitbox = item.m_hitbox;
+                const float delta = m_speed * m_get_dt();
 
-                const float diffyu = (m_position.y + m_size/2.0f)   - hitbox.y;
-                const float diffyd = (hitbox.y     + hitbox.height) - (m_position.y - m_size/2.0f);
-                const float diffxl = (m_position.x + m_size/2.0f)   - hitbox.x;
-                const float diffxr = (hitbox.x     + hitbox.width)  - (m_position.x - m_size/2.0f);
+                const Rectangle left   = { hitbox.x-delta, hitbox.y, delta, hitbox.height };
+                const Rectangle right  = { hitbox.x+hitbox.width, hitbox.y, delta, hitbox.height };
+                const Rectangle top    = { hitbox.x, hitbox.y-delta, hitbox.width, delta };
+                const Rectangle bottom = { hitbox.x, hitbox.y+hitbox.height, hitbox.width, delta };
 
-                const bool grounded       = diffyu + m_speed * m_get_dt() > 0;
-                const bool collision_left = diffxl + m_speed * m_get_dt() > 0;
+#ifdef DEBUG
+                DrawRectangleRec(left,   PURPLE);
+                DrawRectangleRec(right,  PURPLE);
+                DrawRectangleRec(top,    PURPLE);
+                DrawRectangleRec(bottom, PURPLE);
+#endif // DEBUG
 
-                const float eps = 1;
-
-                if (grounded && diffxl > 0 && diffxr > 0 && diffyd > 0) {
-                    std::println("grounded");
+                if (CheckCollisionRecs(get_hitbox(), top)) {
                     m_is_grounded = true;
-                    m_position.y = hitbox.y - m_size/2.0f + eps;
+                    m_position.y = hitbox.y - m_size/2.0f;
+                    DrawRectangleRec(top, ORANGE);
                 }
 
-                if (collision_left && diffyu > 1 && diffyd > 0 && diffxr > 0) {
-                    std::println("left");
-                    m_position.x = hitbox.x - m_size/2.0f - 1;
+                if (CheckCollisionRecs(get_hitbox(), left)) {
+                    m_position.x = hitbox.x - m_size/2.0f;
+                }
+
+                if (CheckCollisionRecs(get_hitbox(), right)) {
+                    m_position.x = hitbox.x + hitbox.width + m_size/2.0f;
+                }
+
+                if (CheckCollisionRecs(get_hitbox(), bottom)) {
+                    m_position.y = hitbox.y + hitbox.height + m_size/2.0f;
                 }
 
             }
@@ -171,7 +172,8 @@ int main() {
     const std::array items {
         bg,
         floor,
-        Item({ 300, 500, 300, 100 }, RED, true, "red"),
+        // Item({ 300, 500, 300, 100 }, RED, true, "red"),
+        Item({ 300, 300, 300, 300 }, RED, true, "red"),
         Item({ 1100, 600, 300, 100 }, GREEN, true, "green")
     };
 
