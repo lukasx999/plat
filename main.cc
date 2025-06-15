@@ -14,11 +14,13 @@ struct Item {
     const Rectangle m_hitbox;
     const Color m_color;
     const bool m_is_blocking;
+    const std::string m_name;
 
-    Item(Rectangle hitbox, Color color, bool is_blocking)
+    Item(Rectangle hitbox, Color color, bool is_blocking, std::string_view name)
         : m_hitbox(hitbox)
         , m_color(color)
         , m_is_blocking(is_blocking)
+        , m_name(name)
     { }
 
 };
@@ -83,48 +85,43 @@ public:
     }
 
     void resolve_collisions(std::span<const Item> items) {
-
         m_is_grounded = false;
 
         for (auto &item : items) {
 
+            const auto dt = m_speed * m_get_dt();
+            const auto hitbox = item.m_hitbox;
+            const bool collision = CheckCollisionRecs(get_hitbox(), { hitbox.x-dt, hitbox.y-dt, hitbox.width+dt, hitbox.height+dt });
+
+            std::println("name: {}", item.m_name);
+
             if (item.m_is_blocking) {
-                const auto hitbox = item.m_hitbox;
 
-                const float diffyu = (m_position.y + m_size/2.0f) - hitbox.y;
-                const float diffyd = (hitbox.y + hitbox.height) - (m_position.y - m_size/2.0f);
-                const float diffxl = (m_position.x + m_size/2.0f) - hitbox.x;
-                const float diffxr = (hitbox.x + hitbox.width) - (m_position.x - m_size/2.0f);
+                const float diffyu = (m_position.y + m_size/2.0f)   - hitbox.y;
+                const float diffyd = (hitbox.y     + hitbox.height) - (m_position.y - m_size/2.0f);
+                const float diffxl = (m_position.x + m_size/2.0f)   - hitbox.x;
+                const float diffxr = (hitbox.x     + hitbox.width)  - (m_position.x - m_size/2.0f);
 
-                const bool grounded = diffyu + m_speed * m_get_dt() > 0;
+                std::println("diffyu: {}", diffyu);
+                std::println("diffyd: {}", diffyd);
+                std::println("diffxl: {}", diffxl);
+                std::println("diffxr: {}", diffxr);
+
+                const bool grounded       = diffyu + m_speed * m_get_dt() > 0;
+                const bool collision_left = diffxl + m_speed * m_get_dt() > 0;
+
+                const float eps = 1;
 
                 if (grounded && diffxl > 0 && diffxr > 0 && diffyd > 0) {
+                    std::println("grounded");
                     m_is_grounded = true;
-                    m_position.y = hitbox.y - m_size/2.0f + 1;
+                    m_position.y = hitbox.y - m_size/2.0f + eps;
                 }
 
-                // if (diffyu < diffyd && diffyu < diffxr && diffyu < diffyd && diffyu > 0) {
-                //     m_position.y -= diffyu;
-                //     // m_is_grounded = true;
-                //     return;
-                // }
-                //
-                // if (diffyd < diffyu && diffyd < diffxl && diffyd < diffxr && diffyd > 0) {
-                //     m_position.y += diffyd;
-                //     return;
-                // }
-                //
-                // if (diffxl < diffxr && diffxl > 0) {
-                //     m_position.x -= diffxl;
-                //     return;
-                // }
-                //
-                // if (diffxr < diffxl && diffxr > 0) {
-                //     m_position.x += diffxr;
-                //     return;
-                // }
-
-
+                if (collision_left && diffyu > 1 && diffyd > 0 && diffxr > 0) {
+                    std::println("left");
+                    m_position.x = hitbox.x - m_size/2.0f - 1;
+                }
 
             }
         }
@@ -170,14 +167,14 @@ int main() {
     InitWindow(WIDTH, HEIGHT, "2D Game");
 
     const int floor_height = 200;
-    const Item floor({ 0, HEIGHT-floor_height, WIDTH, floor_height }, GRAY, true);
-    const Item bg({ 0, 0, WIDTH, HEIGHT }, DARKGRAY, false);
+    const Item floor({ 0, HEIGHT-floor_height, WIDTH, floor_height }, GRAY, true, "floor");
+    const Item bg({ 0, 0, WIDTH, HEIGHT }, DARKGRAY, false, "bg");
 
     const std::array items {
         bg,
         floor,
-        Item({ 300, 500, 300, 100 }, RED, true),
-        Item({ 1100, 600, 300, 100 }, GREEN, true)
+        Item({ 300, 500, 300, 100 }, RED, true, "red"),
+        Item({ 1100, 600, 300, 100 }, GREEN, true, "green")
     };
 
 #ifdef CONST_FT
