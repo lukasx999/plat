@@ -96,16 +96,14 @@ public:
             std::println("name: {}", item.m_name);
 
             if (item.m_is_blocking) {
+                const Rectangle left = { hitbox.x, hitbox.y, hitbox.x, hitbox.height };
+
+                DrawRectangleRec(left, PURPLE);
 
                 const float diffyu = (m_position.y + m_size/2.0f)   - hitbox.y;
                 const float diffyd = (hitbox.y     + hitbox.height) - (m_position.y - m_size/2.0f);
                 const float diffxl = (m_position.x + m_size/2.0f)   - hitbox.x;
                 const float diffxr = (hitbox.x     + hitbox.width)  - (m_position.x - m_size/2.0f);
-
-                std::println("diffyu: {}", diffyu);
-                std::println("diffyd: {}", diffyd);
-                std::println("diffxl: {}", diffxl);
-                std::println("diffxr: {}", diffxr);
 
                 const bool grounded       = diffyu + m_speed * m_get_dt() > 0;
                 const bool collision_left = diffxl + m_speed * m_get_dt() > 0;
