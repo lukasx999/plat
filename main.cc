@@ -246,15 +246,8 @@ public:
 
         auto origin = m_origin;
 
-        switch (m_direction) {
-            case MovementDirection::Left:
-                // flip texture
-                origin.width *= -1;
-                break;
-            case MovementDirection::Right:
-                ;
-                break;
-        }
+        if (m_direction == MovementDirection::Left)
+            origin.width *= -1;
 
         DrawTexturePro(m_tex, origin, get_hitbox(), { 0, 0 }, 0, WHITE);
 
