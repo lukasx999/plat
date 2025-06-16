@@ -46,7 +46,7 @@ class Player {
     const Texture2D m_tex;
     MovementDirection m_direction = MovementDirection::Left;
     static constexpr int m_gravity = 1000;
-    static constexpr float m_movement_speed = 600;
+    static constexpr float m_movement_speed = 500;
     static constexpr float m_jumping_speed = 900;
     static constexpr std::array m_sprites_running {
         Rectangle { 8,   74,  14, 18 },
@@ -68,13 +68,14 @@ class Player {
     };
     static constexpr float m_texture_scale = 5;
     static constexpr float m_walk_delay_secs = 0.1;
+    static constexpr const char *m_tex_path = "./assets/sprites/knight.png";
 
 public:
     Player(Vector2 position, std::function<float()> get_dt)
         : m_origin(m_sprites_running[0])
         , m_position(position)
         , m_get_dt(get_dt)
-        , m_tex(LoadTexture("./assets/sprites/knight.png"))
+        , m_tex(LoadTexture(m_tex_path))
     { }
 
     [[nodiscard]] Rectangle get_hitbox() const {
@@ -105,9 +106,22 @@ public:
 #ifdef DEBUG
         DrawTexture(m_tex, WIDTH-m_tex.width, 0, WHITE);
         for (const auto &sprite : m_sprites_running) {
-            DrawRectangleLinesEx({ sprite.x+(WIDTH-m_tex.width), sprite.y, sprite.width, sprite.height }, 1, BLUE);
+            const Rectangle rect = {
+                sprite.x+(WIDTH-m_tex.width),
+                sprite.y,
+                sprite.width,
+                sprite.height,
+            };
+            DrawRectangleLinesEx(rect, 1, BLUE);
         }
-        DrawRectangleLinesEx({ m_origin.x+(WIDTH-m_tex.width), m_origin.y, m_origin.width, m_origin.height }, 1, RED);
+
+        const Rectangle rect = {
+            m_origin.x+(WIDTH-m_tex.width),
+            m_origin.y,
+            m_origin.width,
+            m_origin.height,
+        };
+        DrawRectangleLinesEx(rect, 1, RED);
 
         DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
 
@@ -156,13 +170,14 @@ public:
                     hitbox.height - clip*2,
                 };
 
+                const float top_delta_mult_factor = 1.3;
                 const Rectangle top = {
                     // remove some padding from each edge to prevent
                     // instant teleportation when jumping up and edge
                     // and moving to the right
-                    hitbox.x + delta_hor,
+                    hitbox.x + delta_hor*top_delta_mult_factor,
                     hitbox.y - delta_ver,
-                    hitbox.width - delta_hor*2,
+                    hitbox.width - delta_hor*top_delta_mult_factor*2,
                     delta_ver,
                 };
 
@@ -170,7 +185,9 @@ public:
                     hitbox.x,
                     hitbox.y + hitbox.height,
                     hitbox.width,
-                    delta_ver,
+                    // when the player bumps their head by jumping, the
+                    // speed is negative, therefore it must be inverted
+                    -delta_ver,
                 };
 
 #ifdef DEBUG_COLLISIONS
@@ -194,8 +211,6 @@ public:
                 }
 
                 if (CheckCollisionRecs(get_hitbox(), bottom)) {
-                    // BUG: overshoot on high jump speeds
-                    // m_position.y = hitbox.y + hitbox.height + get_hitbox().height/2.0f;
                     m_speed = 0;
                 }
 
@@ -265,7 +280,7 @@ int main() {
     const std::array items {
         bg,
         floor,
-        Item({ 300, 300, 300, 200 }, RED, true, "red"),
+        Item({ 300, 300, 300, 300 }, RED, true, "red"),
         Item({ 1100, 600, 300, 100 }, GREEN, true, "green")
     };
 
