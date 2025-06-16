@@ -52,6 +52,14 @@ public:
     , m_get_dt(get_dt)
     { }
 
+    void set_width(const float width) {
+        m_width = width;
+    }
+
+    void set_height(const float height) {
+        m_height = height;
+    }
+
     virtual void update() {
         if (m_is_grounded) {
             m_speed = 0;
@@ -64,14 +72,6 @@ public:
     virtual void jump() {
         if (!m_is_grounded) return;
         m_speed = -m_jumping_speed;
-    }
-
-    void set_width(float width) {
-        m_width = width;
-    }
-
-    void set_height(float height) {
-        m_height = height;
     }
 
     virtual void move(MovementDirection direction) {
