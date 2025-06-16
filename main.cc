@@ -7,7 +7,7 @@
 
 static constexpr auto WIDTH = 1600;
 static constexpr auto HEIGHT = 900;
-#undef DEBUG
+#define DEBUG
 #undef CONST_FT
 
 struct Item {
@@ -92,12 +92,7 @@ public:
 
     void draw() const {
 
-        DrawTexture(m_tex, 0, 0, WHITE);
         auto origin = m_origin;
-        for (const auto &sprite : m_sprites_running) {
-            DrawRectangleLinesEx(sprite, 1, BLUE);
-        }
-        DrawRectangleLinesEx(origin, 1, RED);
 
         switch (m_direction) {
             case MovementDirection::Left:
@@ -110,9 +105,16 @@ public:
         }
 
         DrawTexturePro(m_tex, origin, get_hitbox(), { 0, 0 }, 0, WHITE);
-        DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
 
 #ifdef DEBUG
+        DrawTexture(m_tex, WIDTH-m_tex.width, 0, WHITE);
+        for (const auto &sprite : m_sprites_running) {
+            DrawRectangleLinesEx({ sprite.x+(WIDTH-m_tex.width), sprite.y, sprite.width, sprite.height }, 1, BLUE);
+        }
+        DrawRectangleLinesEx({ m_origin.x+(WIDTH-m_tex.width), m_origin.y, m_origin.width, m_origin.height }, 1, RED);
+
+        DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
+
         DrawText(std::format("pos: x: {}, y: {}", trunc(m_position.x), trunc(m_position.y)).c_str(), 0, 0, 50, WHITE);
         DrawText(std::format("speed: {}:", trunc(m_speed)).c_str(), 0, 50, 50, WHITE);
         DrawText(std::format("jumping: {}", m_is_jumping ? "yes" : "no").c_str(), 0, 100, 50, WHITE);
