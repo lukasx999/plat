@@ -93,6 +93,66 @@ public:
         };
     }
 
+    void handle_collision_top(const Rectangle item_hitbox, const float clip, const float delta_hor, const float delta_ver) {
+        const float top_delta_mult_factor = 1.3;
+        const Rectangle top = {
+            // remove some padding from each edge to prevent
+            // instant teleportation when jumping up and edge
+            // and moving to the right
+            item_hitbox.x + delta_hor*top_delta_mult_factor,
+            item_hitbox.y - delta_ver,
+            item_hitbox.width - delta_hor*top_delta_mult_factor*2,
+            delta_ver,
+        };
+
+        if (CheckCollisionRecs(hitbox(), top)) {
+            m_is_grounded = true;
+            m_position.y = item_hitbox.y - hitbox().height/2.0f + clip;
+        }
+    }
+
+    void handle_collision_bottom(const Rectangle item_hitbox, const float delta_ver) {
+        const Rectangle bottom = {
+            item_hitbox.x,
+            item_hitbox.y + item_hitbox.height,
+            item_hitbox.width,
+            // when the player bumps their head by jumping, the
+            // speed is negative, therefore it must be inverted
+            -delta_ver,
+        };
+
+        if (CheckCollisionRecs(hitbox(), bottom)) {
+            m_speed = 0;
+        }
+    }
+
+    void handle_collision_left(const Rectangle item_hitbox, const float clip, const float delta_hor) {
+        const Rectangle left = {
+            item_hitbox.x - delta_hor,
+            item_hitbox.y + clip,
+            delta_hor,
+            item_hitbox.height - clip*2,
+        };
+
+        if (CheckCollisionRecs(hitbox(), left)) {
+            m_position.x = item_hitbox.x - hitbox().width/2.0f;
+        }
+    }
+
+    void handle_collision_right(const Rectangle item_hitbox, const float clip, const float delta_hor) {
+        const Rectangle right = {
+            item_hitbox.x + item_hitbox.width,
+            item_hitbox.y + clip,
+            delta_hor,
+            item_hitbox.height - clip*2,
+        };
+
+        if (CheckCollisionRecs(hitbox(), right)) {
+            m_position.x = item_hitbox.x + item_hitbox.width + hitbox().width/2.0f;
+        }
+
+    }
+
     virtual void resolve_collisions(const std::span<const Item> items) {
         m_is_grounded = false;
 
@@ -108,63 +168,20 @@ public:
                 // also prevent the player from teleporting down after walking off a ledge
                 const float clip = 1;
 
-                const Rectangle left = {
-                    item_hitbox.x - delta_hor,
-                    item_hitbox.y + clip,
-                    delta_hor,
-                    item_hitbox.height - clip*2,
-                };
 
-                const Rectangle right = {
-                    item_hitbox.x + item_hitbox.width,
-                    item_hitbox.y + clip,
-                    delta_hor,
-                    item_hitbox.height - clip*2,
-                };
+                handle_collision_top(item_hitbox, clip, delta_hor, delta_ver);
+                handle_collision_bottom(item_hitbox, delta_ver);
+                handle_collision_left(item_hitbox, clip, delta_hor);
+                handle_collision_right(item_hitbox, clip, delta_hor);
 
-                const float top_delta_mult_factor = 1.3;
-                const Rectangle top = {
-                    // remove some padding from each edge to prevent
-                    // instant teleportation when jumping up and edge
-                    // and moving to the right
-                    item_hitbox.x + delta_hor*top_delta_mult_factor,
-                    item_hitbox.y - delta_ver,
-                    item_hitbox.width - delta_hor*top_delta_mult_factor*2,
-                    delta_ver,
-                };
+// #ifdef DEBUG_COLLISIONS
+//                 DrawRectangleRec(left,   PURPLE);
+//                 DrawRectangleRec(right,  PURPLE);
+//                 DrawRectangleRec(top,    PURPLE);
+//                 DrawRectangleRec(bottom, PURPLE);
+// #endif // DEBUG_COLLISIONS
 
-                const Rectangle bottom = {
-                    item_hitbox.x,
-                    item_hitbox.y + item_hitbox.height,
-                    item_hitbox.width,
-                    // when the player bumps their head by jumping, the
-                    // speed is negative, therefore it must be inverted
-                    -delta_ver,
-                };
 
-#ifdef DEBUG_COLLISIONS
-                DrawRectangleRec(left,   PURPLE);
-                DrawRectangleRec(right,  PURPLE);
-                DrawRectangleRec(top,    PURPLE);
-                DrawRectangleRec(bottom, PURPLE);
-#endif // DEBUG_COLLISIONS
-
-                if (CheckCollisionRecs(hitbox(), top)) {
-                    m_is_grounded = true;
-                    m_position.y = item_hitbox.y - hitbox().height/2.0f + clip;
-                }
-
-                if (CheckCollisionRecs(hitbox(), left)) {
-                    m_position.x = item_hitbox.x - hitbox().width/2.0f;
-                }
-
-                if (CheckCollisionRecs(hitbox(), right)) {
-                    m_position.x = item_hitbox.x + item_hitbox.width + hitbox().width/2.0f;
-                }
-
-                if (CheckCollisionRecs(hitbox(), bottom)) {
-                    m_speed = 0;
-                }
 
             }
 
