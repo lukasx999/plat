@@ -122,6 +122,7 @@ public:
 
 private:
     void handle_collision(const Rectangle hitbox, const std::function<void (void)> handler) {
+
         if (CheckCollisionRecs(get_hitbox(), hitbox)) {
             handler();
         }
