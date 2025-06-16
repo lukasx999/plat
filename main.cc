@@ -265,7 +265,6 @@ int main() {
     const std::array items {
         bg,
         floor,
-        // Item({ 300, 500, 300, 100 }, RED, true, "red"),
         Item({ 300, 300, 300, 200 }, RED, true, "red"),
         Item({ 1100, 600, 300, 100 }, GREEN, true, "green")
     };
