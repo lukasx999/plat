@@ -7,7 +7,7 @@
 
 static constexpr auto WIDTH = 1600;
 static constexpr auto HEIGHT = 900;
-#define DEBUG
+#undef DEBUG
 #undef CONST_FT
 
 struct Item {
@@ -41,7 +41,6 @@ class Player {
     bool m_is_grounded = false;
     Rectangle m_origin;
     Vector2 m_position;
-    int m_sprite_index = 0;
     const std::function<float()> m_get_dt;
     const Texture2D m_tex;
     enum class MovementDirection {
@@ -52,18 +51,34 @@ class Player {
     static constexpr int m_gravity = 1200;
     static constexpr float m_movement_speed = 600;
     static constexpr float m_jumping_speed = 900;
-    static constexpr Rectangle m_origin_standing { 9, 42, 15, 22 };
+    static constexpr std::array m_sprites_running {
+        Rectangle { 8, 74, 14, 18 },
+        Rectangle { 41, 74, 13, 18 },
+        Rectangle { 73, 74, 13, 18 },
+        Rectangle { 105, 74, 13, 18 },
+        Rectangle { 136, 74, 14, 18 },
+        Rectangle { 169, 74, 13, 18 },
+        Rectangle { 201, 74, 13, 18 },
+        Rectangle { 233, 74, 13, 18 },
+        Rectangle { 8, 106, 14, 17 },
+        Rectangle { 41, 106, 13, 18 },
+        Rectangle { 73, 106, 13, 18 },
+        Rectangle { 105, 106, 13, 18 },
+        Rectangle { 136, 106, 14, 18 },
+        Rectangle { 169, 106, 13, 18 },
+        Rectangle { 201, 106, 13, 18 },
+        Rectangle { 233, 106, 13, 18 },
+    };
     static constexpr float m_texture_scale = 5;
-    static constexpr int m_sprite_offset = 17;
     static constexpr float m_walk_delay_secs = 0.1;
 
 public:
     Player(std::function<float()> get_dt)
         : m_is_jumping(false)
-        , m_origin(m_origin_standing)
+        , m_origin(m_sprites_running[0])
         , m_position(WIDTH/2.0f, HEIGHT - m_origin.height/2.0f - 500)
         , m_get_dt(get_dt)
-        , m_tex(LoadTexture("./characters.png"))
+        , m_tex(LoadTexture("./brackeys_platformer_assets/sprites/knight.png"))
     { }
 
     [[nodiscard]] Rectangle get_hitbox() const {
@@ -77,12 +92,12 @@ public:
 
     void draw() const {
 
-        Rectangle origin = {
-            m_origin.x + m_sprite_index*m_sprite_offset*m_origin.width,
-            m_origin.y,
-            m_origin.width,
-            m_origin.height,
-        };
+        DrawTexture(m_tex, 0, 0, WHITE);
+        auto origin = m_origin;
+        for (const auto &sprite : m_sprites_running) {
+            DrawRectangleLinesEx(sprite, 1, BLUE);
+        }
+        DrawRectangleLinesEx(origin, 1, RED);
 
         switch (m_direction) {
             case MovementDirection::Left:
@@ -95,9 +110,9 @@ public:
         }
 
         DrawTexturePro(m_tex, origin, get_hitbox(), { 0, 0 }, 0, WHITE);
+        DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
 
 #ifdef DEBUG
-        DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
         DrawText(std::format("pos: x: {}, y: {}", trunc(m_position.x), trunc(m_position.y)).c_str(), 0, 0, 50, WHITE);
         DrawText(std::format("speed: {}:", trunc(m_speed)).c_str(), 0, 50, 50, WHITE);
         DrawText(std::format("jumping: {}", m_is_jumping ? "yes" : "no").c_str(), 0, 100, 50, WHITE);
@@ -159,6 +174,7 @@ public:
                 }
 
             }
+
         }
 
     }
@@ -183,10 +199,12 @@ public:
 
 private:
     void walk() {
+        static int sprite_idx = 0;
         static float fut = 0;
         if (GetTime() > fut) {
-            m_sprite_index++;
-            m_sprite_index %= 3;
+            sprite_idx++;
+            sprite_idx %= m_sprites_running.size();
+            m_origin = m_sprites_running[sprite_idx];
             fut = GetTime() + m_walk_delay_secs;
         }
     }
