@@ -55,6 +55,7 @@ class Player {
     static constexpr Rectangle m_origin_standing { 9, 42, 15, 22 };
     static constexpr float m_texture_scale = 5;
     static constexpr int m_sprite_offset = 17;
+    static constexpr float m_walk_delay_secs = 0.1;
 
 public:
     Player(std::function<float()> get_dt)
@@ -106,8 +107,6 @@ public:
     }
 
     void update() {
-
-        walk();
 
         if (m_is_grounded) {
             m_is_jumping = false;
@@ -173,22 +172,22 @@ public:
     void move_right() {
         m_direction = MovementDirection::Right;
         m_position.x += m_movement_speed * m_get_dt();
-        // walk();
+        walk();
     }
 
     void move_left() {
         m_direction = MovementDirection::Left;
         m_position.x -= m_movement_speed * m_get_dt();
-        // walk();
+        walk();
     }
 
 private:
     void walk() {
-        std::println("{}", GetTime());
-        if (trunc(fmod(GetTime()*100, 200)) == 0) {
-            std::println("foo");
-            // m_sprite_index++;
-            // m_sprite_index %= 3;
+        static float fut = 0;
+        if (GetTime() > fut) {
+            m_sprite_index++;
+            m_sprite_index %= 3;
+            fut = GetTime() + m_walk_delay_secs;
         }
     }
 
@@ -224,7 +223,7 @@ int main() {
         bg,
         floor,
         // Item({ 300, 500, 300, 100 }, RED, true, "red"),
-        Item({ 300, 300, 300, 300 }, RED, true, "red"),
+        Item({ 300, 300, 300, 200 }, RED, true, "red"),
         Item({ 1100, 600, 300, 100 }, GREEN, true, "green")
     };
 
