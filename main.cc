@@ -104,7 +104,6 @@ public:
                 const auto hitbox = item.m_hitbox;
                 const float delta_ver = m_speed * m_get_dt();
                 const float delta_hor = m_movement_speed * m_get_dt();
-
                 // let the player clip a bit into the floor when grounded, to prevent
                 // oscillation of grounding state
                 // also prevent the player from teleporting down after walking off a ledge
@@ -122,9 +121,20 @@ public:
     }
 
 private:
+    void handle_collision(const Rectangle hitbox, const std::function<void (void)> handler) {
+        if (CheckCollisionRecs(get_hitbox(), hitbox)) {
+            handler();
+        }
+
+        #ifdef DEBUG_COLLISIONS
+        DrawRectangleRec(hitbox, PURPLE);
+        #endif // DEBUG_COLLISIONS
+    }
+
     void handle_collision_top(const Rectangle hitbox, const float clip, const float delta_hor, const float delta_ver) {
+
         const float top_delta_mult_factor = 1.3;
-        const Rectangle top = {
+        const Rectangle rect = {
             // remove some padding from each edge to prevent
             // instant teleportation when jumping up and edge
             // and moving to the right
@@ -134,18 +144,15 @@ private:
             delta_ver,
         };
 
-        if (CheckCollisionRecs(get_hitbox(), top)) {
+        handle_collision(rect, [&] {
             m_is_grounded = true;
             m_position.y = hitbox.y - get_hitbox().height/2.0f + clip;
-        }
+        });
 
-        #ifdef DEBUG_COLLISIONS
-        DrawRectangleRec(top, PURPLE);
-        #endif // DEBUG_COLLISIONS
     }
 
     void handle_collision_bottom(const Rectangle hitbox, const float delta_ver) {
-        const Rectangle bottom = {
+        const Rectangle rect = {
             hitbox.x,
             hitbox.y + hitbox.height,
             hitbox.width,
@@ -154,47 +161,42 @@ private:
             -delta_ver,
         };
 
-        if (CheckCollisionRecs(get_hitbox(), bottom)) {
+        handle_collision(rect, [&] {
             m_speed = 0;
-        }
-
-        #ifdef DEBUG_COLLISIONS
-        DrawRectangleRec(bottom, PURPLE);
-        #endif // DEBUG_COLLISIONS
+        });
     }
 
     void handle_collision_left(const Rectangle hitbox, const float clip, const float delta_hor) {
-        const Rectangle left = {
+
+        const Rectangle rect = {
             hitbox.x - delta_hor,
             hitbox.y + clip,
             delta_hor,
             hitbox.height - clip*2,
         };
 
-        if (CheckCollisionRecs(get_hitbox(), left)) {
+        if (CheckCollisionRecs(get_hitbox(), rect)) {
             m_position.x = hitbox.x - get_hitbox().width/2.0f;
         }
 
         #ifdef DEBUG_COLLISIONS
-        DrawRectangleRec(left, PURPLE);
+        DrawRectangleRec(rect, PURPLE);
         #endif // DEBUG_COLLISIONS
     }
 
     void handle_collision_right(const Rectangle hitbox, const float clip, const float delta_hor) {
-        const Rectangle right = {
+
+        const Rectangle rect = {
             hitbox.x + hitbox.width,
             hitbox.y + clip,
             delta_hor,
             hitbox.height - clip*2,
         };
 
-        if (CheckCollisionRecs(get_hitbox(), right)) {
+        handle_collision(rect, [&] {
             m_position.x = hitbox.x + hitbox.width + get_hitbox().width/2.0f;
-        }
+        });
 
-        #ifdef DEBUG_COLLISIONS
-        DrawRectangleRec(right, PURPLE);
-        #endif // DEBUG_COLLISIONS
     }
 
 };
