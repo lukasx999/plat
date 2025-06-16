@@ -1,2 +1,5 @@
-# plat
-2d platformer
+# Platformer
+
+# Credits
+Brackeys' Platformer Bundle
+[](https://brackeysgames.itch.io/brackeys-platformer-bundle)

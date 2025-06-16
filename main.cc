@@ -78,7 +78,7 @@ public:
         , m_origin(m_sprites_running[0])
         , m_position(WIDTH/2.0f, HEIGHT - m_origin.height/2.0f - 500)
         , m_get_dt(get_dt)
-        , m_tex(LoadTexture("./brackeys_platformer_assets/sprites/knight.png"))
+        , m_tex(LoadTexture("./assets/sprites/knight.png"))
     { }
 
     [[nodiscard]] Rectangle get_hitbox() const {
