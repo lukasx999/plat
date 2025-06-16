@@ -8,6 +8,7 @@
 static constexpr auto WIDTH = 1600;
 static constexpr auto HEIGHT = 900;
 #define DEBUG
+#define DEBUG_COLLISIONS
 #undef CONST_FT
 
 struct Item {
@@ -69,7 +70,7 @@ class Player {
         Rectangle { 201, 106, 13, 18 },
         Rectangle { 233, 106, 13, 18 },
     };
-    static constexpr float m_texture_scale = 10;
+    static constexpr float m_texture_scale = 5;
     static constexpr float m_walk_delay_secs = 0.1;
 
 public:
@@ -137,43 +138,57 @@ public:
 
     }
 
-    void resolve_collisions(std::span<const Item> items) {
+    void resolve_collisions(const std::span<const Item> items) {
         m_is_grounded = false;
 
-        for (auto &item : items) {
+        for (const auto &item : items) {
             if (item.m_is_blocking) {
 
                 const auto hitbox = item.m_hitbox;
-                // TODO: account for player x movement speed
                 const float delta = m_speed * m_get_dt();
+                const float delta_hor = m_movement_speed * m_get_dt();
 
-                const Rectangle left   = { hitbox.x-delta, hitbox.y, delta, hitbox.height };
-                const Rectangle right  = { hitbox.x+hitbox.width, hitbox.y, delta, hitbox.height };
+                const float clip = 1;
+                // const Rectangle left   = { hitbox.x-delta_hor, hitbox.y, delta_hor, hitbox.height };
+                const Rectangle left   = { hitbox.x-delta_hor, hitbox.y+clip, delta_hor, hitbox.height-clip*2 };
+                const Rectangle right  = { hitbox.x+hitbox.width, hitbox.y, delta_hor, hitbox.height };
                 const Rectangle top    = { hitbox.x, hitbox.y-delta, hitbox.width, delta };
                 const Rectangle bottom = { hitbox.x, hitbox.y+hitbox.height, hitbox.width, delta };
 
-#ifdef DEBUG
+#ifdef DEBUG_COLLISIONS
                 DrawRectangleRec(left,   PURPLE);
                 DrawRectangleRec(right,  PURPLE);
                 DrawRectangleRec(top,    PURPLE);
                 DrawRectangleRec(bottom, PURPLE);
-#endif // DEBUG
+#endif // DEBUG_COLLISIONS
 
                 if (CheckCollisionRecs(get_hitbox(), top)) {
                     m_is_grounded = true;
-                    m_position.y = hitbox.y - get_hitbox().height/2.0f;
+                    m_position.y = hitbox.y - get_hitbox().height/2.0f + clip;
+#ifdef DEBUG_COLLISIONS
+                    std::println("collision: top");
+#endif // DEBUG_COLLISIONS
                 }
 
                 if (CheckCollisionRecs(get_hitbox(), left)) {
                     m_position.x = hitbox.x - get_hitbox().width/2.0f;
+#ifdef DEBUG_COLLISIONS
+                    std::println("collision: left");
+#endif // DEBUG_COLLISIONS
                 }
 
                 if (CheckCollisionRecs(get_hitbox(), right)) {
                     m_position.x = hitbox.x + hitbox.width + get_hitbox().width/2.0f;
+#ifdef DEBUG_COLLISIONS
+                    std::println("collision: right");
+#endif // DEBUG_COLLISIONS
                 }
 
                 if (CheckCollisionRecs(get_hitbox(), bottom)) {
                     m_position.y = hitbox.y + hitbox.height + get_hitbox().height/2.0f;
+#ifdef DEBUG_COLLISIONS
+                    std::println("collision: bottom");
+#endif // DEBUG_COLLISIONS
                 }
 
             }
@@ -183,6 +198,7 @@ public:
     }
 
     void jump() {
+        // TODO: remove ground oscillation and remove m_is_jumping
         if (m_is_jumping) return;
         m_is_jumping = true;
         m_speed = -m_jumping_speed;
