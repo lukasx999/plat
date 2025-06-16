@@ -52,24 +52,24 @@ class Player {
     static constexpr float m_movement_speed = 600;
     static constexpr float m_jumping_speed = 900;
     static constexpr std::array m_sprites_running {
-        Rectangle { 8, 74, 14, 18 },
-        Rectangle { 41, 74, 13, 18 },
-        Rectangle { 73, 74, 13, 18 },
-        Rectangle { 105, 74, 13, 18 },
-        Rectangle { 136, 74, 14, 18 },
-        Rectangle { 169, 74, 13, 18 },
-        Rectangle { 201, 74, 13, 18 },
-        Rectangle { 233, 74, 13, 18 },
-        Rectangle { 8, 106, 14, 17 },
-        Rectangle { 41, 106, 13, 18 },
-        Rectangle { 73, 106, 13, 18 },
+        Rectangle { 8,   74,  14, 18 },
+        Rectangle { 41,  74,  13, 18 },
+        Rectangle { 73,  74,  13, 18 },
+        Rectangle { 105, 74,  13, 18 },
+        Rectangle { 136, 74,  14, 18 },
+        Rectangle { 169, 74,  13, 18 },
+        Rectangle { 201, 74,  13, 18 },
+        Rectangle { 233, 74,  13, 18 },
+        Rectangle { 8,   106, 14, 17 },
+        Rectangle { 41,  106, 13, 18 },
+        Rectangle { 73,  106, 13, 18 },
         Rectangle { 105, 106, 13, 18 },
         Rectangle { 136, 106, 14, 18 },
         Rectangle { 169, 106, 13, 18 },
         Rectangle { 201, 106, 13, 18 },
         Rectangle { 233, 106, 13, 18 },
     };
-    static constexpr float m_texture_scale = 5;
+    static constexpr float m_texture_scale = 10;
     static constexpr float m_walk_delay_secs = 0.1;
 
 public:
@@ -144,6 +144,7 @@ public:
             if (item.m_is_blocking) {
 
                 const auto hitbox = item.m_hitbox;
+                // TODO: account for player x movement speed
                 const float delta = m_speed * m_get_dt();
 
                 const Rectangle left   = { hitbox.x-delta, hitbox.y, delta, hitbox.height };
