@@ -25,7 +25,7 @@ struct Item {
 
 };
 
-void draw_environment(std::span<const Item> items) {
+void draw_environment(const std::span<const Item> items) {
     for (auto &item : items) {
         DrawRectangleRec(item.m_hitbox, item.m_color);
     }
@@ -36,17 +36,15 @@ void draw_environment(std::span<const Item> items) {
 
 
 class Player {
+    enum class MovementDirection { Left, Right };
+
     float m_speed = 0;
     bool m_is_grounded = false;
     Rectangle m_origin;
     Vector2 m_position;
     const std::function<float()> m_get_dt;
     const Texture2D m_tex;
-    enum class MovementDirection {
-        Left,
-        Right
-    } m_direction = MovementDirection::Left;
-
+    MovementDirection m_direction = MovementDirection::Left;
     static constexpr int m_gravity = 1000;
     static constexpr float m_movement_speed = 600;
     static constexpr float m_jumping_speed = 900;
@@ -121,16 +119,12 @@ public:
     }
 
     void update() {
-
         if (m_is_grounded) {
             m_speed = 0;
-
         } else {
             m_speed += m_gravity * m_get_dt();
             m_position.y += m_speed * m_get_dt();
-
         }
-
     }
 
     void resolve_collisions(const std::span<const Item> items) {
