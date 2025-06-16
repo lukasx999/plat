@@ -2,4 +2,4 @@
 
 # Credits
 Brackeys' Platformer Bundle
-[](https://brackeysgames.itch.io/brackeys-platformer-bundle)
+()[https://brackeysgames.itch.io/brackeys-platformer-bundle]
