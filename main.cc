@@ -7,7 +7,7 @@
 
 static constexpr auto WIDTH = 1600;
 static constexpr auto HEIGHT = 900;
-#define DEBUG
+#undef DEBUG
 #define DEBUG_COLLISIONS
 
 struct Item {
@@ -30,6 +30,8 @@ void draw_environment(const std::span<const Item> items) {
         DrawRectangleRec(item.m_hitbox, item.m_color);
     }
 }
+
+enum class MovementDirection { Left, Right };
 
 enum class EntityState {
     MovingLeft,
@@ -62,6 +64,7 @@ class PhysicsEntity {
     EntityState m_new_state = EntityState::Idle;
 
 public:
+    MovementDirection m_direction = MovementDirection::Right;
     EntityState m_state = EntityState::Idle;
 
     PhysicsEntity(Vector2 position, std::function<float()> get_dt)
@@ -95,14 +98,21 @@ public:
         m_speed = -m_jumping_speed;
     }
 
-    virtual void move_left() {
-        m_new_state = EntityState::MovingLeft;
-        m_position.x -= m_movement_speed * m_get_dt();
-    }
+    virtual void move(MovementDirection direction) {
+        m_direction = direction;
 
-    virtual void move_right() {
-        m_new_state = EntityState::MovingRight;
-        m_position.x += m_movement_speed * m_get_dt();
+        switch (direction) {
+            case MovementDirection::Left:
+                m_new_state = EntityState::MovingLeft;
+                m_position.x -= m_movement_speed * m_get_dt();
+                break;
+
+            case MovementDirection::Right:
+                m_new_state = EntityState::MovingRight;
+                m_position.x += m_movement_speed * m_get_dt();
+                break;
+        }
+
     }
 
     [[nodiscard]] Rectangle get_hitbox() const {
@@ -221,13 +231,54 @@ private:
 
 };
 
+class SpritesheetAnimation {
+    int m_idx = 0;
+    const float m_delay_secs;
+    const std::span<const Rectangle> m_sprites;
+
+public:
+    SpritesheetAnimation(std::span<const Rectangle> sprites, float delay_secs)
+        : m_delay_secs(delay_secs)
+        , m_sprites(sprites)
+    { }
+
+    void reset() {
+        m_idx = 0;
+    }
+
+    [[nodiscard]] Rectangle get() const {
+        return m_sprites[m_idx];
+    }
+
+    Rectangle next() {
+        static float fut = 0;
+
+        if (GetTime() > fut) {
+            fut = GetTime() + m_delay_secs;
+            m_idx++;
+            m_idx %= m_sprites.size();
+        }
+
+        return get();
+    }
+
+};
+
+
 class Player : public PhysicsEntity {
     Rectangle m_tex_origin;
     const Texture2D m_tex;
+    static constexpr float m_texture_scale = 5;
+    static constexpr const char *m_tex_path = "./assets/sprites/knight.png";
     static constexpr std::array m_sprites_idle {
-        Rectangle { 8,   74,  14, 18 },
-        Rectangle { 41,  74,  13, 18 },
+        Rectangle { 9, 9, 13, 19 },
+        Rectangle { 41, 10, 13, 18 },
+        Rectangle { 73, 10, 13, 18 },
+        Rectangle { 73, 10, 13, 18 },
+        Rectangle { 105, 10, 13, 18 },
     };
+    SpritesheetAnimation m_spritesheet_idle;
+    SpritesheetAnimation m_spritesheet_running;
     static constexpr std::array m_sprites_running {
         Rectangle { 8,   74,  14, 18 },
         Rectangle { 41,  74,  13, 18 },
@@ -246,53 +297,46 @@ class Player : public PhysicsEntity {
         Rectangle { 201, 106, 13, 18 },
         Rectangle { 233, 106, 13, 18 },
     };
-    static constexpr float m_texture_scale = 5;
-    static constexpr float m_walk_delay_secs = 0.1;
-    static constexpr const char *m_tex_path = "./assets/sprites/knight.png";
 
 public:
     Player(Vector2 position, std::function<float()> get_dt)
         : PhysicsEntity(position, get_dt)
         , m_tex_origin(m_sprites_idle[0])
         , m_tex(LoadTexture(m_tex_path))
+        , m_spritesheet_idle(m_sprites_idle, 0.2)
+        , m_spritesheet_running(m_sprites_running, 0.1)
     { }
 
     void update() override {
         PhysicsEntity::update();
-        // TODO: keep hitbox constant
+        // TODO: make hitbox constant
         set_width(m_tex_origin.width*m_texture_scale);
         set_height(m_tex_origin.height*m_texture_scale);
 
         switch (m_state) {
             case EntityState::MovingLeft:
+                m_tex_origin = m_spritesheet_running.next();
+                m_spritesheet_idle.reset();
                 break;
+
             case EntityState::MovingRight:
+                m_tex_origin = m_spritesheet_running.next();
+                m_spritesheet_idle.reset();
                 break;
+
             case EntityState::Idle:
+                m_tex_origin = m_spritesheet_idle.next();
+                m_spritesheet_running.reset();
                 break;
         }
 
     }
 
-    void move_left() override {
-        PhysicsEntity::move_left();
-        walk();
-    }
-
-    void move_right() override {
-        PhysicsEntity::move_right();
-        walk();
-    }
-
     void draw() const {
-
         auto origin = m_tex_origin;
-
-        if (m_state == EntityState::MovingLeft)
+        if (m_direction == MovementDirection::Left)
             origin.width *= -1;
-
         DrawTexturePro(m_tex, origin, get_hitbox(), { 0, 0 }, 0, WHITE);
-
         DrawText(std::format("state: {}", stringify_state(m_state)).c_str(), 0, 50, 50, WHITE);
 
 #ifdef DEBUG
@@ -324,18 +368,6 @@ public:
 
     }
 
-private:
-    void walk() {
-        static int sprite_idx = 0;
-        static float fut = 0;
-        if (GetTime() > fut) {
-            sprite_idx++;
-            sprite_idx %= m_sprites_running.size();
-            m_tex_origin = m_sprites_running[sprite_idx];
-            fut = GetTime() + m_walk_delay_secs;
-        }
-    }
-
 };
 
 static void handle_input(Player &player) {
@@ -345,11 +377,11 @@ static void handle_input(Player &player) {
     }
 
     if (IsKeyDown(KEY_D)) {
-        player.move_right();
+        player.move(MovementDirection::Right);
     }
 
     if (IsKeyDown(KEY_A)) {
-        player.move_left();
+        player.move(MovementDirection::Left);
     }
 
 }
