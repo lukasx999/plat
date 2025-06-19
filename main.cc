@@ -31,7 +31,23 @@ void draw_environment(const std::span<const Item> items) {
     }
 }
 
-enum class MovementDirection { Left, Right };
+enum class EntityState {
+    MovingLeft,
+    MovingRight,
+    Idle,
+};
+
+[[nodiscard]] constexpr static
+auto stringify_state(EntityState state) {
+    switch (state) {
+        case EntityState::MovingLeft:
+            return "MovingLeft";
+        case EntityState::MovingRight:
+            return "MovingRight";
+        case EntityState::Idle:
+            return "Idle";
+    }
+}
 
 class PhysicsEntity {
     Vector2 m_position;
@@ -43,30 +59,35 @@ class PhysicsEntity {
     static constexpr int m_gravity = 1000;
     static constexpr float m_movement_speed = 500;
     static constexpr float m_jumping_speed = 900;
+    EntityState m_new_state = EntityState::Idle;
 
 public:
-    MovementDirection m_direction = MovementDirection::Left;
+    EntityState m_state = EntityState::Idle;
 
     PhysicsEntity(Vector2 position, std::function<float()> get_dt)
-    : m_position(position)
-    , m_get_dt(get_dt)
+        : m_position(position)
+        , m_get_dt(get_dt)
     { }
 
-    void set_width(const float width) {
+    void set_width(float width) {
         m_width = width;
     }
 
-    void set_height(const float height) {
+    void set_height(float height) {
         m_height = height;
     }
 
     virtual void update() {
+        m_state = m_new_state;
+        m_new_state = EntityState::Idle;
+
         if (m_is_grounded) {
             m_speed = 0;
         } else {
             m_speed += m_gravity * m_get_dt();
             m_position.y += m_speed * m_get_dt();
         }
+
     }
 
     virtual void jump() {
@@ -74,16 +95,14 @@ public:
         m_speed = -m_jumping_speed;
     }
 
-    virtual void move(MovementDirection direction) {
-        m_direction = direction;
-        switch (direction) {
-            case MovementDirection::Left:
-                m_position.x -= m_movement_speed * m_get_dt();
-                break;
-            case MovementDirection::Right:
-                m_position.x += m_movement_speed * m_get_dt();
-                break;
-        }
+    virtual void move_left() {
+        m_new_state = EntityState::MovingLeft;
+        m_position.x -= m_movement_speed * m_get_dt();
+    }
+
+    virtual void move_right() {
+        m_new_state = EntityState::MovingRight;
+        m_position.x += m_movement_speed * m_get_dt();
     }
 
     [[nodiscard]] Rectangle get_hitbox() const {
@@ -95,19 +114,19 @@ public:
         };
     }
 
-    virtual void resolve_collisions(const std::span<const Item> items) {
+    virtual void resolve_collisions(std::span<const Item> items) {
         m_is_grounded = false;
 
         for (const auto &item : items) {
             if (item.m_is_blocking) {
 
-                const auto hitbox = item.m_hitbox;
-                const float delta_ver = m_speed * m_get_dt();
-                const float delta_hor = m_movement_speed * m_get_dt();
+                auto hitbox = item.m_hitbox;
+                float delta_ver = m_speed * m_get_dt();
+                float delta_hor = m_movement_speed * m_get_dt();
                 // let the player clip a bit into the floor when grounded, to prevent
                 // oscillation of grounding state
                 // also prevent the player from teleporting down after walking off a ledge
-                const float clip = 1;
+                float clip = 1;
 
                 handle_collision_left(hitbox, clip, delta_hor);
                 handle_collision_right(hitbox, clip, delta_hor);
@@ -121,7 +140,7 @@ public:
     }
 
 private:
-    void handle_collision(const Rectangle hitbox, const std::function<void (void)> handler) {
+    void handle_collision(Rectangle hitbox, std::function<void()> handler) {
 
         if (CheckCollisionRecs(get_hitbox(), hitbox)) {
             handler();
@@ -132,10 +151,10 @@ private:
         #endif // DEBUG_COLLISIONS
     }
 
-    void handle_collision_top(const Rectangle hitbox, const float clip, const float delta_hor, const float delta_ver) {
+    void handle_collision_top(Rectangle hitbox, float clip, float delta_hor, float delta_ver) {
 
-        const float top_delta_mult_factor = 1.3;
-        const Rectangle rect = {
+        float top_delta_mult_factor = 1.3;
+        Rectangle rect = {
             // remove some padding from each edge to prevent
             // instant teleportation when jumping up and edge
             // and moving to the right
@@ -153,7 +172,7 @@ private:
     }
 
     void handle_collision_bottom(const Rectangle hitbox, const float delta_ver) {
-        const Rectangle rect = {
+        Rectangle rect = {
             hitbox.x,
             hitbox.y + hitbox.height,
             hitbox.width,
@@ -167,9 +186,9 @@ private:
         });
     }
 
-    void handle_collision_left(const Rectangle hitbox, const float clip, const float delta_hor) {
+    void handle_collision_left(Rectangle hitbox, float clip, float delta_hor) {
 
-        const Rectangle rect = {
+        Rectangle rect = {
             hitbox.x - delta_hor,
             hitbox.y + clip,
             delta_hor,
@@ -185,9 +204,9 @@ private:
         #endif // DEBUG_COLLISIONS
     }
 
-    void handle_collision_right(const Rectangle hitbox, const float clip, const float delta_hor) {
+    void handle_collision_right(Rectangle hitbox, float clip, float delta_hor) {
 
-        const Rectangle rect = {
+        Rectangle rect = {
             hitbox.x + hitbox.width,
             hitbox.y + clip,
             delta_hor,
@@ -203,8 +222,12 @@ private:
 };
 
 class Player : public PhysicsEntity {
-    Rectangle m_origin;
+    Rectangle m_tex_origin;
     const Texture2D m_tex;
+    static constexpr std::array m_sprites_idle {
+        Rectangle { 8,   74,  14, 18 },
+        Rectangle { 41,  74,  13, 18 },
+    };
     static constexpr std::array m_sprites_running {
         Rectangle { 8,   74,  14, 18 },
         Rectangle { 41,  74,  13, 18 },
@@ -230,34 +253,52 @@ class Player : public PhysicsEntity {
 public:
     Player(Vector2 position, std::function<float()> get_dt)
         : PhysicsEntity(position, get_dt)
-        , m_origin(m_sprites_running[0])
+        , m_tex_origin(m_sprites_idle[0])
         , m_tex(LoadTexture(m_tex_path))
     { }
 
     void update() override {
         PhysicsEntity::update();
-        set_width(m_origin.width*m_texture_scale);
-        set_height(m_origin.height*m_texture_scale);
+        // TODO: keep hitbox constant
+        set_width(m_tex_origin.width*m_texture_scale);
+        set_height(m_tex_origin.height*m_texture_scale);
+
+        switch (m_state) {
+            case EntityState::MovingLeft:
+                break;
+            case EntityState::MovingRight:
+                break;
+            case EntityState::Idle:
+                break;
+        }
+
     }
 
-    void move(MovementDirection direction) override {
-        PhysicsEntity::move(direction);
+    void move_left() override {
+        PhysicsEntity::move_left();
+        walk();
+    }
+
+    void move_right() override {
+        PhysicsEntity::move_right();
         walk();
     }
 
     void draw() const {
 
-        auto origin = m_origin;
+        auto origin = m_tex_origin;
 
-        if (m_direction == MovementDirection::Left)
+        if (m_state == EntityState::MovingLeft)
             origin.width *= -1;
 
         DrawTexturePro(m_tex, origin, get_hitbox(), { 0, 0 }, 0, WHITE);
 
+        DrawText(std::format("state: {}", stringify_state(m_state)).c_str(), 0, 50, 50, WHITE);
+
 #ifdef DEBUG
         DrawTexture(m_tex, WIDTH-m_tex.width, 0, WHITE);
-        for (const auto &sprite : m_sprites_running) {
-            const Rectangle rect = {
+        for (auto &sprite : m_sprites_running) {
+            Rectangle rect = {
                 sprite.x+(WIDTH-m_tex.width),
                 sprite.y,
                 sprite.width,
@@ -266,11 +307,11 @@ public:
             DrawRectangleLinesEx(rect, 1, BLUE);
         }
 
-        const Rectangle rect = {
-            m_origin.x+(WIDTH-m_tex.width),
-            m_origin.y,
-            m_origin.width,
-            m_origin.height,
+        Rectangle rect = {
+            m_tex_origin.x+(WIDTH-m_tex.width),
+            m_tex_origin.y,
+            m_tex_origin.width,
+            m_tex_origin.height,
         };
         DrawRectangleLinesEx(rect, 1, RED);
 
@@ -290,7 +331,7 @@ private:
         if (GetTime() > fut) {
             sprite_idx++;
             sprite_idx %= m_sprites_running.size();
-            m_origin = m_sprites_running[sprite_idx];
+            m_tex_origin = m_sprites_running[sprite_idx];
             fut = GetTime() + m_walk_delay_secs;
         }
     }
@@ -304,11 +345,11 @@ static void handle_input(Player &player) {
     }
 
     if (IsKeyDown(KEY_D)) {
-        player.move(MovementDirection::Right);
+        player.move_right();
     }
 
     if (IsKeyDown(KEY_A)) {
-        player.move(MovementDirection::Left);
+        player.move_left();
     }
 
 }
@@ -319,11 +360,11 @@ int main() {
     SetTargetFPS(60);
     InitWindow(WIDTH, HEIGHT, "2D Game");
 
-    const int floor_height = 200;
-    const Item floor({ 0, HEIGHT-floor_height, WIDTH, floor_height }, GRAY, true, "floor");
-    const Item bg({ 0, 0, WIDTH, HEIGHT }, DARKGRAY, false, "bg");
+    int floor_height = 200;
+    Item floor({ 0.0f, static_cast<float>(HEIGHT-floor_height), WIDTH, static_cast<float>(floor_height) }, GRAY, true, "floor");
+    Item bg({ 0, 0, WIDTH, HEIGHT }, DARKGRAY, false, "bg");
 
-    const std::array items {
+    std::array items {
         bg,
         floor,
         Item({ 300, 300, 300, 300 }, RED, true, "red"),
