@@ -231,13 +231,14 @@ private:
 
 };
 
-class SpritesheetAnimation {
+// TODO: remove sprite view
+class SpriteAnimation {
     int m_idx = 0;
     const float m_delay_secs;
     const std::span<const Rectangle> m_sprites;
 
 public:
-    SpritesheetAnimation(std::span<const Rectangle> sprites, float delay_secs)
+    SpriteAnimation(std::span<const Rectangle> sprites, float delay_secs)
         : m_delay_secs(delay_secs)
         , m_sprites(sprites)
     { }
@@ -277,8 +278,8 @@ class Player : public PhysicsEntity {
         Rectangle { 73, 10, 13, 18 },
         Rectangle { 105, 10, 13, 18 },
     };
-    SpritesheetAnimation m_spritesheet_idle;
-    SpritesheetAnimation m_spritesheet_running;
+    SpriteAnimation m_spritesheet_idle;
+    SpriteAnimation m_spritesheet_running;
     static constexpr std::array m_sprites_running {
         Rectangle { 8,   74,  14, 18 },
         Rectangle { 41,  74,  13, 18 },
