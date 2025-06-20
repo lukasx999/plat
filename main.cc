@@ -52,9 +52,9 @@ auto stringify_state(EntityState state) {
 }
 
 class PhysicsEntity {
-    float m_width = 0;
-    float m_height = 0;
     const std::function<float()> m_get_dt;
+    const float m_width;
+    const float m_height;
     static constexpr int m_gravity = 1000;
     static constexpr float m_movement_speed = 500;
     static constexpr float m_jumping_speed = 700;
@@ -67,18 +67,12 @@ public:
     MovementDirection m_direction = MovementDirection::Right;
     EntityState m_state = EntityState::Idle;
 
-    PhysicsEntity(Vector2 position, std::function<float()> get_dt)
+    PhysicsEntity(Vector2 position, float width, float height, std::function<float()> get_dt)
         : m_get_dt(get_dt)
+        , m_width(width)
+        , m_height(height)
         , m_position(position)
     { }
-
-    void set_width(float width) {
-        m_width = width;
-    }
-
-    void set_height(float height) {
-        m_height = height;
-    }
 
     virtual void update() {
         m_state = m_new_state;
@@ -300,7 +294,7 @@ class Player : public PhysicsEntity {
 
 public:
     Player(Vector2 position, std::function<float()> get_dt)
-        : PhysicsEntity(position, get_dt)
+        : PhysicsEntity(position, 14*m_texture_scale, 19*m_texture_scale, get_dt)
         , m_tex_origin(m_sprites_idle[0])
         , m_tex(LoadTexture(m_tex_path))
         , m_spritesheet_idle(0.2, m_sprites_idle.size())
@@ -309,9 +303,6 @@ public:
 
     void update() override {
         PhysicsEntity::update();
-        // TODO: make hitbox constant
-        set_width(m_tex_origin.width*m_texture_scale);
-        set_height(m_tex_origin.height*m_texture_scale);
 
         switch (m_state) {
             case EntityState::MovingLeft:
@@ -334,8 +325,10 @@ public:
 
     void draw() const {
         auto origin = m_tex_origin;
+
         if (m_direction == MovementDirection::Left)
             origin.width *= -1;
+
         DrawTexturePro(m_tex, origin, get_hitbox(), { 0, 0 }, 0, WHITE);
 
         DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
@@ -344,7 +337,6 @@ public:
         draw_debug_spritesheet();
         draw_debug_info();
         #endif // DEBUG
-
     }
 
 private:
