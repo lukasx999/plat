@@ -340,7 +340,15 @@ public:
 
         DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
 
-#ifdef DEBUG
+        #ifdef DEBUG
+        draw_debug_spritesheet();
+        draw_debug_info();
+        #endif // DEBUG
+
+    }
+
+private:
+    void draw_debug_spritesheet() const {
         DrawTexture(m_tex, WIDTH-m_tex.width, 0, WHITE);
 
         Rectangle rect = {
@@ -350,14 +358,9 @@ public:
             m_tex_origin.height,
         };
         DrawRectangleLinesEx(rect, 1, RED);
-
-        draw_debug_text();
-
-#endif // DEBUG
-
     }
 
-    void draw_debug_text() const {
+    void draw_debug_info() const {
         float textsize = 50;
         DrawText(std::format("pos: x: {}, y: {}", trunc(m_position.x), trunc(m_position.y)).c_str(), 0, 0, textsize, WHITE);
         DrawText(std::format("speed: {}:", trunc(m_speed)).c_str(), 0, 50, textsize, WHITE);
