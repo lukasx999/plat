@@ -166,9 +166,8 @@ public:
 private:
     void handle_collision(Rectangle hitbox, std::function<void()> handler) {
 
-        if (CheckCollisionRecs(get_hitbox(), hitbox)) {
+        if (CheckCollisionRecs(get_hitbox(), hitbox))
             handler();
-        }
 
         #ifdef DEBUG_COLLISIONS
         DrawRectangleRec(hitbox, PURPLE);
@@ -192,7 +191,6 @@ private:
             m_is_grounded = true;
             m_position.y = hitbox.y - get_hitbox().height/2.0f + clip;
         });
-
     }
 
     void handle_collision_bottom(const Rectangle hitbox, const float delta_ver) {
@@ -240,20 +238,22 @@ private:
         handle_collision(rect, [&] {
             m_position.x = hitbox.x + hitbox.width + get_hitbox().width/2.0f;
         });
-
     }
 
 };
 
 class SpriteAnimation {
     int m_idx = 0;
+    float m_next_cycle = 0;
     const float m_delay_secs;
     const int m_max;
+    const std::function<float()> m_get_time;
 
 public:
-    SpriteAnimation(float delay_secs, int max)
+    SpriteAnimation(float delay_secs, int max, std::function<float()> get_time)
         : m_delay_secs(delay_secs)
         , m_max(max)
+        , m_get_time(get_time)
     { }
 
     void reset() {
@@ -265,10 +265,10 @@ public:
     }
 
     int next() {
-        static float fut = 0;
+        float time = m_get_time();
 
-        if (GetTime() > fut) {
-            fut = GetTime() + m_delay_secs;
+        if (time > m_next_cycle) {
+            m_next_cycle = time + m_delay_secs;
             m_idx++;
             m_idx %= m_max;
         }
@@ -317,8 +317,8 @@ public:
         : PhysicsEntity(position, 14*m_texture_scale, 19*m_texture_scale, get_dt)
         , m_tex_origin(m_sprites_idle[0])
         , m_tex(LoadTexture(m_tex_path))
-        , m_spritesheet_idle(0.2, m_sprites_idle.size())
-        , m_spritesheet_running(0.1, m_sprites_running.size())
+        , m_spritesheet_idle(0.2, m_sprites_idle.size(), GetTime)
+        , m_spritesheet_running(0.1, m_sprites_running.size(), GetTime)
     { }
 
     void update() override {
