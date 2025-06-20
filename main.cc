@@ -73,21 +73,21 @@ public:
     }
 
 private:
-
     #ifdef DEBUG
     void draw_debug_info() const {
-        auto pos = m_player.get_position();
-        auto speed = m_player.get_speed();
+        auto pos      = m_player.get_position();
+        auto speed    = m_player.get_speed();
         auto grounded = m_player.is_grounded() ? "yes" : "no";
-        auto state = stringify_state(m_player.get_state());
+        auto state    = stringify_state(m_player.get_state());
+        int jumps     = m_player.get_jumpcount();
+        int dashes    = m_player.get_dashcount();
 
         add_debug_text(std::format("pos: x: {}, y: {}", trunc(pos.x), trunc(pos.y)), 0);
         add_debug_text(std::format("speed: x: {}, y: {}", trunc(speed.x), trunc(speed.y)), 1);
         add_debug_text(std::format("grounded: {}", grounded), 2);
         add_debug_text(std::format("state: {}", state), 3);
-        add_debug_text(std::format("jumps: {}", m_player.get_jumpcount()), 4);
-        add_debug_text(std::format("dashes: {}", m_player.get_dashcount()), 5);
-
+        add_debug_text(std::format("jumps: {}", jumps), 4);
+        add_debug_text(std::format("dashes: {}", dashes), 5);
     }
 
     void add_debug_text(std::string text, int idx) const {

@@ -49,7 +49,7 @@ public:
     }
 
     [[nodiscard]] bool can_dash() const {
-        bool cooldown_over = GetTime() > m_dash_time + m_dash_cooldown_secs ;
+        bool cooldown_over = GetTime() > m_dash_time + m_dash_cooldown_secs;
         bool any_dashes_left = m_dash_count;
         return cooldown_over && any_dashes_left;
     }
@@ -128,13 +128,15 @@ public:
             m_dash.reset();
             m_speed.y = 0;
         } else {
-            m_speed.y += m_gravity * m_get_dt();
+            apply_gravity();
         }
 
-        m_position = Vector2Add(m_position, Vector2Scale(m_speed, m_get_dt()));
+        update_position();
 
         if (m_dash.has_ended()) {
             m_speed.x = 0;
+        } else {
+            m_speed.y = 0;
         }
 
     }
@@ -207,6 +209,14 @@ public:
     }
 
 private:
+    void update_position() {
+        m_position = Vector2Add(m_position, Vector2Scale(m_speed, m_get_dt()));
+    }
+
+    void apply_gravity() {
+        m_speed.y += m_gravity * m_get_dt();
+    }
+
     void handle_collision(Rectangle hitbox, std::function<void()> handler) {
 
         if (CheckCollisionRecs(get_hitbox(), hitbox))
