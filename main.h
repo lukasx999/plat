@@ -6,11 +6,11 @@
 #include <raylib.h>
 #include <raymath.h>
 
-#undef DEBUG
-#undef DEBUG_COLLISIONS
+#define DEBUG
+#define DEBUG_COLLISIONS
 
-static constexpr auto WIDTH = 1600;
-static constexpr auto HEIGHT = 900;
+static constexpr int WIDTH = 1600;
+static constexpr int HEIGHT = 900;
 
 struct Item {
     const Rectangle m_hitbox;

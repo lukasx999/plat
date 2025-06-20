@@ -20,6 +20,18 @@ public:
     : m_player({ WIDTH/2.0f, HEIGHT - 500 }, GetFrameTime)
     { }
 
+    void update() {
+        handle_input(m_player);
+        m_player.resolve_collisions(m_items);
+        m_player.update();
+    }
+
+    void draw() const {
+        draw_environment(m_items);
+        m_player.draw();
+    }
+
+private:
     [[nodiscard]] constexpr static std::array<Item, 4> init_env() {
         int floor_height = 200;
         Item floor{ { 0.0f, static_cast<float>(HEIGHT-floor_height), WIDTH, static_cast<float>(floor_height) }, GRAY, true};
@@ -31,17 +43,6 @@ public:
             Item({ 300, 300, 300, 300 }, RED, true),
             Item({ 1100, 600, 300, 100 }, GREEN, true)
         };
-    }
-
-    void update() {
-        handle_input(m_player);
-        m_player.resolve_collisions(m_items);
-        m_player.update();
-    }
-
-    void draw() const {
-        draw_environment(m_items);
-        m_player.draw();
     }
 
     void draw_environment(std::span<const Item> items) const {
@@ -68,14 +69,11 @@ public:
 
 };
 
-
-
-
 int main() {
 
     SetTraceLogLevel(LOG_ERROR);
     SetTargetFPS(60);
-    InitWindow(WIDTH, HEIGHT, "2D Game");
+    InitWindow(WIDTH, HEIGHT, "platformer");
 
     Game game;
 
@@ -85,7 +83,6 @@ int main() {
             ClearBackground(BLACK);
             game.update();
             game.draw();
-
         }
         EndDrawing();
     }

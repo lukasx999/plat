@@ -146,9 +146,9 @@ private:
         if (CheckCollisionRecs(get_hitbox(), hitbox))
             handler();
 
-        #ifdef DEBUG_COLLISIONS
+        // #ifdef DEBUG_COLLISIONS
         DrawRectangleRec(hitbox, PURPLE);
-        #endif // DEBUG_COLLISIONS
+        // #endif // DEBUG_COLLISIONS
     }
 
     void handle_collision_top(Rectangle hitbox, float clip, float delta_hor, float delta_ver) {
