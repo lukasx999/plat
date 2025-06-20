@@ -9,11 +9,37 @@
 #include "player.h"
 #include "main.h"
 
+class Environment {
+    const std::array<Item, 4> m_items = init_env();
+public:
+    Environment() = default;
+
+    [[nodiscard]] std::span<const Item> get_items() const {
+        return m_items;
+    }
+
+    void draw() const {
+        for (const auto &item : m_items) {
+            DrawRectangleRec(item.m_hitbox, item.m_color);
+        }
+    }
+
+private:
+    [[nodiscard]] constexpr static std::array<Item, 4> init_env() {
+        float floor_height = 200;
+        return {
+            Item({ 0, 0, WIDTH, HEIGHT }, DARKGRAY, false),
+            Item({ 0.0f, HEIGHT - floor_height, WIDTH, floor_height }, GRAY, true),
+            Item({ 300, 300, 300, 300 }, RED, true),
+            Item({ 1100, 600, 300, 100 }, GREEN, true)
+        };
+    }
+};
 
 
 class Game {
     Player m_player;
-    const std::array<Item, 4> m_items = init_env();
+    Environment m_env;
 
 public:
     Game()
@@ -22,18 +48,20 @@ public:
 
     void update() {
         handle_input(m_player);
-        m_player.resolve_collisions(m_items);
+        m_player.resolve_collisions(m_env.get_items());
         m_player.update();
     }
 
     void draw() const {
-        draw_environment(m_items);
+        m_env.draw();
         m_player.draw();
 
         #ifdef DEBUG
         draw_debug_info();
         #endif // DEBUG
     }
+
+private:
 
     #ifdef DEBUG
     void draw_debug_info() const {
@@ -46,22 +74,6 @@ public:
     }
     #endif // DEBUG
 
-private:
-    [[nodiscard]] constexpr static std::array<Item, 4> init_env() {
-        float floor_height = 200;
-        return {
-            Item({ 0, 0, WIDTH, HEIGHT }, DARKGRAY, false),
-            Item({ 0.0f, HEIGHT - floor_height, WIDTH, floor_height }, GRAY, true),
-            Item({ 300, 300, 300, 300 }, RED, true),
-            Item({ 1100, 600, 300, 100 }, GREEN, true)
-        };
-    }
-
-    void draw_environment(std::span<const Item> items) const {
-        for (const auto &item : items) {
-            DrawRectangleRec(item.m_hitbox, item.m_color);
-        }
-    }
 
     void handle_input(Player &player) {
 
