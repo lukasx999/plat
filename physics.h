@@ -30,6 +30,41 @@ auto stringify_state(EntityState state) {
     }
 }
 
+class Dash {
+    int m_dash_count = 0;
+    float m_dash_time = 0;
+    static constexpr float m_dash_cooldown_secs = 0.5;
+    static constexpr float m_dash_duration_secs = 0.1;
+    static constexpr int m_max_dashes = 2;
+
+public:
+    Dash() = default;
+
+    [[nodiscard]] int dash_count() const {
+        return m_dash_count;
+    }
+
+    [[nodiscard]] bool has_ended() const {
+        return GetTime() > m_dash_time;
+    }
+
+    [[nodiscard]] bool can_dash() const {
+        bool cooldown_over = GetTime() > m_dash_time + m_dash_cooldown_secs ;
+        bool any_dashes_left = m_dash_count;
+        return cooldown_over && any_dashes_left;
+    }
+
+    void dash() {
+        m_dash_count--;
+        m_dash_time = GetTime() + m_dash_duration_secs;
+    }
+
+    void reset() {
+        m_dash_count = m_max_dashes;
+    }
+
+};
+
 class PhysicsEntity {
     Vector2 m_position;
     Vector2 m_speed;
@@ -38,19 +73,15 @@ class PhysicsEntity {
     EntityState m_new_state = EntityState::Idle;
     EntityState m_state = EntityState::Idle;
     int m_jump_count = 0;
-    int m_dash_count = 0;
-    float m_dash_time = 0;
+    Dash m_dash;
     const std::function<float()> m_get_dt;
     const float m_width;
     const float m_height;
     static constexpr int m_max_jumps = 2;
-    static constexpr int m_max_dashes = 1;
     static constexpr int m_gravity = 1000;
     static constexpr float m_movement_speed = 500;
     static constexpr float m_jumping_speed = 700;
     static constexpr float m_dashing_speed = 2000;
-    static constexpr float m_dash_cooldown_secs = 0.5;
-    static constexpr float m_dash_duration_secs = 0.1;
 
 public:
     PhysicsEntity(Vector2 position, float width, float height, std::function<float()> get_dt)
@@ -85,7 +116,7 @@ public:
     }
 
     [[nodiscard]] int get_dashcount() const {
-        return m_dash_count;
+        return m_dash.dash_count();
     }
 
     virtual void update() {
@@ -94,7 +125,7 @@ public:
 
         if (m_is_grounded) {
             m_jump_count = m_max_jumps;
-            m_dash_count = m_max_dashes;
+            m_dash.reset();
             m_speed.y = 0;
         } else {
             m_speed.y += m_gravity * m_get_dt();
@@ -102,8 +133,7 @@ public:
 
         m_position = Vector2Add(m_position, Vector2Scale(m_speed, m_get_dt()));
 
-        bool has_dash_ended = GetTime() > m_dash_time;
-        if (has_dash_ended) {
+        if (m_dash.has_ended()) {
             m_speed.x = 0;
         }
 
@@ -111,15 +141,11 @@ public:
 
     virtual void dash() {
 
-        if (!m_dash_count) return;
-
         // avoid players spamming the dash button
-        bool can_dash = GetTime() > m_dash_time + m_dash_cooldown_secs;
-        if (!can_dash) return;
+        if (!m_dash.can_dash()) return;
 
         m_speed.x = m_dashing_speed;
-        m_dash_time = GetTime() + m_dash_duration_secs;
-        m_dash_count--;
+        m_dash.dash();
 
         if (m_direction == MovementDirection::Left)
             m_speed.x *= -1;
