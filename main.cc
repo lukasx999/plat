@@ -76,22 +76,23 @@ private:
 
     #ifdef DEBUG
     void draw_debug_info() const {
-        float textsize = 50;
         auto pos = m_player.get_position();
-        DrawText(std::format("pos: x: {}, y: {}", trunc(pos.x), trunc(pos.y)).c_str(), 0, 0, textsize, WHITE);
-        DrawText(std::format(
-            "speed: x: {}, y: {}",
-            trunc(m_player.get_speed().x),
-            trunc(m_player.get_speed().y)).c_str(),
-            0,
-            50,
-            textsize,
-            WHITE
-        );
-        DrawText(std::format("grounded: {}", m_player.is_grounded() ? "yes" : "no").c_str(), 0, 100, textsize, WHITE);
-        DrawText(std::format("state: {}", stringify_state(m_player.get_state())).c_str(), 0, 150, textsize, WHITE);
-        DrawText(std::format("jumps: {}", m_player.get_jumpcount()).c_str(), 0, 200, textsize, WHITE);
-        DrawText(std::format("dashes: {}", m_player.get_dashcount()).c_str(), 0, 250, textsize, WHITE);
+        auto speed = m_player.get_speed();
+        auto grounded = m_player.is_grounded() ? "yes" : "no";
+        auto state = stringify_state(m_player.get_state());
+
+        add_debug_text(std::format("pos: x: {}, y: {}", trunc(pos.x), trunc(pos.y)), 0);
+        add_debug_text(std::format("speed: x: {}, y: {}", trunc(speed.x), trunc(speed.y)), 1);
+        add_debug_text(std::format("grounded: {}", grounded), 2);
+        add_debug_text(std::format("state: {}", state), 3);
+        add_debug_text(std::format("jumps: {}", m_player.get_jumpcount()), 4);
+        add_debug_text(std::format("dashes: {}", m_player.get_dashcount()), 5);
+
+    }
+
+    void add_debug_text(std::string text, int idx) const {
+        float textsize = 50;
+        DrawText(text.c_str(), 0, idx*textsize, textsize, WHITE);
     }
     #endif // DEBUG
 
