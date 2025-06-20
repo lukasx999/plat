@@ -1,0 +1,216 @@
+#pragma once
+
+#include <functional>
+#include <span>
+
+#include <raylib.h>
+#include <raymath.h>
+
+#include "main.h"
+
+enum class MovementDirection { Left, Right };
+
+enum class EntityState {
+    MovingLeft,
+    MovingRight,
+    Idle,
+};
+
+[[nodiscard]] constexpr static
+auto stringify_state(EntityState state) {
+    switch (state) {
+        case EntityState::MovingLeft:
+            return "MovingLeft";
+        case EntityState::MovingRight:
+            return "MovingRight";
+        case EntityState::Idle:
+            return "Idle";
+    }
+}
+
+class PhysicsEntity {
+    Vector2 m_position;
+    float m_speed = 0;
+    bool m_is_grounded = false;
+    MovementDirection m_direction = MovementDirection::Right;
+    EntityState m_new_state = EntityState::Idle;
+    EntityState m_state = EntityState::Idle;
+    const std::function<float()> m_get_dt;
+    const float m_width;
+    const float m_height;
+    static constexpr int m_gravity = 1000;
+    static constexpr float m_movement_speed = 500;
+    static constexpr float m_jumping_speed = 700;
+
+public:
+
+    PhysicsEntity(Vector2 position, float width, float height, std::function<float()> get_dt)
+        : m_position(position)
+        , m_get_dt(get_dt)
+        , m_width(width)
+        , m_height(height)
+    { }
+
+    [[nodiscard]] Vector2 get_position() const {
+        return m_position;
+    }
+
+    [[nodiscard]] bool is_grounded() const {
+        return m_is_grounded;
+    }
+
+    [[nodiscard]] float get_speed() const {
+        return m_speed;
+    }
+
+    [[nodiscard]] MovementDirection get_direction() const {
+        return m_direction;
+    }
+
+    [[nodiscard]] EntityState get_state() const {
+        return m_state;
+    }
+
+    virtual void update() {
+        m_state = m_new_state;
+        m_new_state = EntityState::Idle;
+
+        if (m_is_grounded) {
+            m_speed = 0;
+        } else {
+            m_speed += m_gravity * m_get_dt();
+            m_position.y += m_speed * m_get_dt();
+        }
+
+    }
+
+    virtual void jump() {
+        if (!m_is_grounded) return;
+        m_speed = -m_jumping_speed;
+    }
+
+    virtual void move(MovementDirection direction) {
+        m_direction = direction;
+
+        switch (direction) {
+            case MovementDirection::Left:
+                m_new_state = EntityState::MovingLeft;
+                m_position.x -= m_movement_speed * m_get_dt();
+                break;
+
+            case MovementDirection::Right:
+                m_new_state = EntityState::MovingRight;
+                m_position.x += m_movement_speed * m_get_dt();
+                break;
+        }
+
+    }
+
+    [[nodiscard]] Rectangle get_hitbox() const {
+        return {
+            m_position.x - m_width/2.0f,
+            m_position.y - m_height/2.0f,
+            m_width,
+            m_height,
+        };
+    }
+
+    virtual void resolve_collisions(std::span<const Item> items) {
+        m_is_grounded = false;
+
+        for (const auto &item : items) {
+            if (item.m_is_blocking) {
+
+                auto hitbox = item.m_hitbox;
+                float delta_ver = m_speed * m_get_dt();
+                float delta_hor = m_movement_speed * m_get_dt();
+                // let the player clip a bit into the floor when grounded, to prevent
+                // oscillation of grounding state
+                // also prevent the player from teleporting down after walking off a ledge
+                float clip = 1;
+
+                handle_collision_left(hitbox, clip, delta_hor);
+                handle_collision_right(hitbox, clip, delta_hor);
+                handle_collision_top(hitbox, clip, delta_hor, delta_ver);
+                handle_collision_bottom(hitbox, delta_ver);
+
+            }
+
+        }
+
+    }
+
+private:
+    void handle_collision(Rectangle hitbox, std::function<void()> handler) {
+
+        if (CheckCollisionRecs(get_hitbox(), hitbox))
+            handler();
+
+        #ifdef DEBUG_COLLISIONS
+        DrawRectangleRec(hitbox, PURPLE);
+        #endif // DEBUG_COLLISIONS
+    }
+
+    void handle_collision_top(Rectangle hitbox, float clip, float delta_hor, float delta_ver) {
+
+        float top_delta_mult_factor = 1.3;
+        Rectangle rect = {
+            // remove some padding from each edge to prevent
+            // instant teleportation when jumping up and edge
+            // and moving to the right
+            hitbox.x + delta_hor*top_delta_mult_factor,
+            hitbox.y - delta_ver,
+            hitbox.width - delta_hor*top_delta_mult_factor*2,
+            delta_ver,
+        };
+
+        handle_collision(rect, [&] {
+            m_is_grounded = true;
+            m_position.y = hitbox.y - get_hitbox().height/2.0f + clip;
+        });
+    }
+
+    void handle_collision_bottom(const Rectangle hitbox, const float delta_ver) {
+        Rectangle rect = {
+            hitbox.x,
+            hitbox.y + hitbox.height,
+            hitbox.width,
+            // when the player bumps their head by jumping, the
+            // speed is negative, therefore it must be inverted
+            -delta_ver,
+        };
+
+        handle_collision(rect, [&] {
+            m_speed = 0;
+        });
+    }
+
+    void handle_collision_left(Rectangle hitbox, float clip, float delta_hor) {
+
+        Rectangle rect = {
+            hitbox.x - delta_hor,
+            hitbox.y + clip,
+            delta_hor,
+            hitbox.height - clip*2,
+        };
+
+        handle_collision(rect, [&] {
+            m_position.x = hitbox.x - get_hitbox().width/2.0f;
+        });
+    }
+
+    void handle_collision_right(Rectangle hitbox, float clip, float delta_hor) {
+
+        Rectangle rect = {
+            hitbox.x + hitbox.width,
+            hitbox.y + clip,
+            delta_hor,
+            hitbox.height - clip*2,
+        };
+
+        handle_collision(rect, [&] {
+            m_position.x = hitbox.x + hitbox.width + get_hitbox().width/2.0f;
+        });
+    }
+
+};
