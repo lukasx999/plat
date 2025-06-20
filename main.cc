@@ -9,11 +9,12 @@
 #include "player.h"
 #include "main.h"
 
+
+
 class Environment {
     const std::array<Item, 4> m_items = init_env();
-public:
-    Environment() = default;
 
+public:
     [[nodiscard]] std::span<const Item> get_items() const {
         return m_items;
     }
@@ -25,7 +26,7 @@ public:
     }
 
 private:
-    [[nodiscard]] constexpr static std::array<Item, 4> init_env() {
+    [[nodiscard]] static constexpr std::array<Item, 4> init_env() {
         float floor_height = 200;
         return {
             Item({ 0, 0, WIDTH, HEIGHT }, DARKGRAY, false),
