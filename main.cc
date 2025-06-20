@@ -52,6 +52,9 @@ auto stringify_state(EntityState state) {
 }
 
 class PhysicsEntity {
+    Vector2 m_position;
+    float m_speed = 0;
+    bool m_is_grounded = false;
     const std::function<float()> m_get_dt;
     const float m_width;
     const float m_height;
@@ -61,18 +64,27 @@ class PhysicsEntity {
     EntityState m_new_state = EntityState::Idle;
 
 public:
-    Vector2 m_position;
-    float m_speed = 0;
-    bool m_is_grounded = false;
     MovementDirection m_direction = MovementDirection::Right;
     EntityState m_state = EntityState::Idle;
 
     PhysicsEntity(Vector2 position, float width, float height, std::function<float()> get_dt)
-        : m_get_dt(get_dt)
+        : m_position(position)
+        , m_get_dt(get_dt)
         , m_width(width)
         , m_height(height)
-        , m_position(position)
     { }
+
+    [[nodiscard]] Vector2 get_position() const {
+        return m_position;
+    }
+
+    [[nodiscard]] bool is_grounded() const {
+        return m_is_grounded;
+    }
+
+    [[nodiscard]] float get_speed() const {
+        return m_speed;
+    }
 
     virtual void update() {
         m_state = m_new_state;
@@ -354,9 +366,9 @@ private:
 
     void draw_debug_info() const {
         float textsize = 50;
-        DrawText(std::format("pos: x: {}, y: {}", trunc(m_position.x), trunc(m_position.y)).c_str(), 0, 0, textsize, WHITE);
-        DrawText(std::format("speed: {}:", trunc(m_speed)).c_str(), 0, 50, textsize, WHITE);
-        DrawText(std::format("grounded: {}", m_is_grounded ? "yes" : "no").c_str(), 0, 100, textsize, WHITE);
+        DrawText(std::format("pos: x: {}, y: {}", trunc(get_position().x), trunc(get_position().y)).c_str(), 0, 0, textsize, WHITE);
+        DrawText(std::format("speed: {}:", trunc(get_speed())).c_str(), 0, 50, textsize, WHITE);
+        DrawText(std::format("grounded: {}", is_grounded() ? "yes" : "no").c_str(), 0, 100, textsize, WHITE);
         DrawText(std::format("state: {}", stringify_state(m_state)).c_str(), 0, 150, textsize, WHITE);
     }
 
