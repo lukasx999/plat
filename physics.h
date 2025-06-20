@@ -37,12 +37,14 @@ class PhysicsEntity {
     MovementDirection m_direction = MovementDirection::Right;
     EntityState m_new_state = EntityState::Idle;
     EntityState m_state = EntityState::Idle;
-    int m_jump_count = 2; // TODO:
+    int m_jump_count = 0;
+    int m_dash_count = 0;
     float m_dash_time = 0;
     const std::function<float()> m_get_dt;
     const float m_width;
     const float m_height;
     static constexpr int m_max_jumps = 2;
+    static constexpr int m_max_dashes = 1;
     static constexpr int m_gravity = 1000;
     static constexpr float m_movement_speed = 500;
     static constexpr float m_jumping_speed = 700;
@@ -82,12 +84,17 @@ public:
         return m_jump_count;
     }
 
+    [[nodiscard]] int get_dashcount() const {
+        return m_dash_count;
+    }
+
     virtual void update() {
         m_state = m_new_state;
         m_new_state = EntityState::Idle;
 
         if (m_is_grounded) {
             m_jump_count = m_max_jumps;
+            m_dash_count = m_max_dashes;
             m_speed.y = 0;
         } else {
             m_speed.y += m_gravity * m_get_dt();
@@ -104,11 +111,15 @@ public:
 
     virtual void dash() {
 
+        if (!m_dash_count) return;
+
+        // avoid players spamming the dash button
         bool can_dash = GetTime() > m_dash_time + m_dash_cooldown_secs;
         if (!can_dash) return;
 
         m_speed.x = m_dashing_speed;
         m_dash_time = GetTime() + m_dash_duration_secs;
+        m_dash_count--;
 
         if (m_direction == MovementDirection::Left)
             m_speed.x *= -1;

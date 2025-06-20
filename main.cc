@@ -91,6 +91,7 @@ private:
         DrawText(std::format("grounded: {}", m_player.is_grounded() ? "yes" : "no").c_str(), 0, 100, textsize, WHITE);
         DrawText(std::format("state: {}", stringify_state(m_player.get_state())).c_str(), 0, 150, textsize, WHITE);
         DrawText(std::format("jumps: {}", m_player.get_jumpcount()).c_str(), 0, 200, textsize, WHITE);
+        DrawText(std::format("dashes: {}", m_player.get_dashcount()).c_str(), 0, 250, textsize, WHITE);
     }
     #endif // DEBUG
 
