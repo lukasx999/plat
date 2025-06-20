@@ -351,9 +351,9 @@ public:
 
         DrawTexturePro(m_tex, origin, get_hitbox(), { 0, 0 }, 0, WHITE);
 
-        DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
 
         #ifdef DEBUG
+        DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
         draw_debug_spritesheet();
         draw_debug_info();
         #endif // DEBUG
