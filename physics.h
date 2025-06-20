@@ -37,10 +37,12 @@ class PhysicsEntity {
     MovementDirection m_direction = MovementDirection::Right;
     EntityState m_new_state = EntityState::Idle;
     EntityState m_state = EntityState::Idle;
+    int m_jump_count = 2; // TODO:
     float m_dash_time = 0;
     const std::function<float()> m_get_dt;
     const float m_width;
     const float m_height;
+    static constexpr int m_max_jumps = 2;
     static constexpr int m_gravity = 1000;
     static constexpr float m_movement_speed = 500;
     static constexpr float m_jumping_speed = 700;
@@ -76,11 +78,16 @@ public:
         return m_state;
     }
 
+    [[nodiscard]] int get_jumpcount() const {
+        return m_jump_count;
+    }
+
     virtual void update() {
         m_state = m_new_state;
         m_new_state = EntityState::Idle;
 
         if (m_is_grounded) {
+            m_jump_count = m_max_jumps;
             m_speed.y = 0;
         } else {
             m_speed.y += m_gravity * m_get_dt();
@@ -108,7 +115,8 @@ public:
     }
 
     virtual void jump() {
-        if (!m_is_grounded) return;
+        if (!m_jump_count) return;
+        m_jump_count--;
         m_speed.y = -m_jumping_speed;
     }
 
