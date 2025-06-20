@@ -25,8 +25,8 @@ struct Item {
 
 };
 
-void draw_environment(const std::span<const Item> items) {
-    for (auto &item : items) {
+static void draw_environment(std::span<const Item> items) {
+    for (const auto &item : items) {
         DrawRectangleRec(item.m_hitbox, item.m_color);
     }
 }
@@ -55,17 +55,17 @@ class PhysicsEntity {
     Vector2 m_position;
     float m_speed = 0;
     bool m_is_grounded = false;
+    MovementDirection m_direction = MovementDirection::Right;
+    EntityState m_new_state = EntityState::Idle;
+    EntityState m_state = EntityState::Idle;
     const std::function<float()> m_get_dt;
     const float m_width;
     const float m_height;
     static constexpr int m_gravity = 1000;
     static constexpr float m_movement_speed = 500;
     static constexpr float m_jumping_speed = 700;
-    EntityState m_new_state = EntityState::Idle;
 
 public:
-    MovementDirection m_direction = MovementDirection::Right;
-    EntityState m_state = EntityState::Idle;
 
     PhysicsEntity(Vector2 position, float width, float height, std::function<float()> get_dt)
         : m_position(position)
@@ -84,6 +84,14 @@ public:
 
     [[nodiscard]] float get_speed() const {
         return m_speed;
+    }
+
+    [[nodiscard]] MovementDirection get_direction() const {
+        return m_direction;
+    }
+
+    [[nodiscard]] EntityState get_state() const {
+        return m_state;
     }
 
     virtual void update() {
@@ -316,7 +324,7 @@ public:
     void update() override {
         PhysicsEntity::update();
 
-        switch (m_state) {
+        switch (get_state()) {
             case EntityState::MovingLeft:
                 m_tex_origin = m_sprites_running[m_spritesheet_running.next()];
                 m_spritesheet_idle.reset();
@@ -338,7 +346,7 @@ public:
     void draw() const {
         auto origin = m_tex_origin;
 
-        if (m_direction == MovementDirection::Left)
+        if (get_direction() == MovementDirection::Left)
             origin.width *= -1;
 
         DrawTexturePro(m_tex, origin, get_hitbox(), { 0, 0 }, 0, WHITE);
@@ -369,7 +377,7 @@ private:
         DrawText(std::format("pos: x: {}, y: {}", trunc(get_position().x), trunc(get_position().y)).c_str(), 0, 0, textsize, WHITE);
         DrawText(std::format("speed: {}:", trunc(get_speed())).c_str(), 0, 50, textsize, WHITE);
         DrawText(std::format("grounded: {}", is_grounded() ? "yes" : "no").c_str(), 0, 100, textsize, WHITE);
-        DrawText(std::format("state: {}", stringify_state(m_state)).c_str(), 0, 150, textsize, WHITE);
+        DrawText(std::format("state: {}", stringify_state(get_state())).c_str(), 0, 150, textsize, WHITE);
     }
 
 };
