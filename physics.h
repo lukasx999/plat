@@ -32,17 +32,21 @@ auto stringify_state(EntityState state) {
 
 class PhysicsEntity {
     Vector2 m_position;
-    float m_speed = 0;
+    Vector2 m_speed;
     bool m_is_grounded = false;
     MovementDirection m_direction = MovementDirection::Right;
     EntityState m_new_state = EntityState::Idle;
     EntityState m_state = EntityState::Idle;
+    float m_dash_time = 0;
     const std::function<float()> m_get_dt;
     const float m_width;
     const float m_height;
     static constexpr int m_gravity = 1000;
     static constexpr float m_movement_speed = 500;
     static constexpr float m_jumping_speed = 700;
+    static constexpr float m_dashing_speed = 2000;
+    static constexpr float m_dash_cooldown_secs = 0.5;
+    static constexpr float m_dash_duration_secs = 0.1;
 
 public:
     PhysicsEntity(Vector2 position, float width, float height, std::function<float()> get_dt)
@@ -60,7 +64,7 @@ public:
         return m_is_grounded;
     }
 
-    [[nodiscard]] float get_speed() const {
+    [[nodiscard]] Vector2 get_speed() const {
         return m_speed;
     }
 
@@ -77,22 +81,35 @@ public:
         m_new_state = EntityState::Idle;
 
         if (m_is_grounded) {
-            m_speed = 0;
+            m_speed.y = 0;
         } else {
-            m_speed += m_gravity * m_get_dt();
-            m_position.y += m_speed * m_get_dt();
+            m_speed.y += m_gravity * m_get_dt();
+        }
+
+        m_position = Vector2Add(m_position, Vector2Scale(m_speed, m_get_dt()));
+
+        bool has_dash_ended = GetTime() > m_dash_time;
+        if (has_dash_ended) {
+            m_speed.x = 0;
         }
 
     }
 
     virtual void dash() {
-        // TODO:
-        assert(!"TODO");
+
+        bool can_dash = GetTime() > m_dash_time + m_dash_cooldown_secs;
+        if (!can_dash) return;
+
+        m_speed.x = m_dashing_speed;
+        m_dash_time = GetTime() + m_dash_duration_secs;
+
+        if (m_direction == MovementDirection::Left)
+            m_speed.x *= -1;
     }
 
     virtual void jump() {
         if (!m_is_grounded) return;
-        m_speed = -m_jumping_speed;
+        m_speed.y = -m_jumping_speed;
     }
 
     virtual void move(MovementDirection direction) {
@@ -127,7 +144,7 @@ public:
             if (item.m_is_blocking) {
 
                 auto hitbox = item.m_hitbox;
-                float delta_ver = m_speed * m_get_dt();
+                float delta_ver = m_speed.y * m_get_dt();
                 float delta_hor = m_movement_speed * m_get_dt();
                 // let the player clip a bit into the floor when grounded, to prevent
                 // oscillation of grounding state
@@ -186,7 +203,7 @@ private:
         };
 
         handle_collision(rect, [&] {
-            m_speed = 0;
+            m_speed.y = 0;
         });
     }
 
@@ -200,6 +217,7 @@ private:
         };
 
         handle_collision(rect, [&] {
+            m_speed.x = 0;
             m_position.x = hitbox.x - get_hitbox().width/2.0f;
         });
     }
@@ -214,6 +232,7 @@ private:
         };
 
         handle_collision(rect, [&] {
+            m_speed.x = 0;
             m_position.x = hitbox.x + hitbox.width + get_hitbox().width/2.0f;
         });
     }

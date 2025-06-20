@@ -12,7 +12,8 @@
 
 
 class Environment {
-    const std::array<Item, 4> m_items = init_env();
+    // TODO: maybe replace vector with array
+    const std::vector<Item> m_items = init_env();
 
 public:
     [[nodiscard]] std::span<const Item> get_items() const {
@@ -26,11 +27,20 @@ public:
     }
 
 private:
-    [[nodiscard]] static constexpr std::array<Item, 4> init_env() {
-        float floor_height = 200;
+    [[nodiscard]] static constexpr std::vector<Item> init_env() {
+        float wall_size = 100;
+        Item bg({ 0, 0, WIDTH, HEIGHT }, DARKGRAY, false);
+        Item floor({ 0, HEIGHT - wall_size, WIDTH, wall_size }, GRAY, true);
+        Item ceil({ 0, 0, WIDTH, wall_size }, GRAY, true);
+        Item left_wall({ 0, wall_size, wall_size, HEIGHT-wall_size*2 }, GRAY, true);
+        Item right_wall({ WIDTH-wall_size, wall_size, wall_size, HEIGHT-wall_size*2 }, GRAY, true);
+
         return {
-            Item({ 0, 0, WIDTH, HEIGHT }, DARKGRAY, false),
-            Item({ 0.0f, HEIGHT - floor_height, WIDTH, floor_height }, GRAY, true),
+            bg,
+            ceil,
+            floor,
+            left_wall,
+            right_wall,
             Item({ 300, 300, 300, 300 }, RED, true),
             Item({ 1100, 600, 300, 100 }, GREEN, true)
         };
@@ -69,7 +79,15 @@ private:
         float textsize = 50;
         auto pos = m_player.get_position();
         DrawText(std::format("pos: x: {}, y: {}", trunc(pos.x), trunc(pos.y)).c_str(), 0, 0, textsize, WHITE);
-        DrawText(std::format("speed: {}:", trunc(m_player.get_speed())).c_str(), 0, 50, textsize, WHITE);
+        DrawText(std::format(
+            "speed: x: {}, y: {}",
+            trunc(m_player.get_speed().x),
+            trunc(m_player.get_speed().y)).c_str(),
+            0,
+            50,
+            textsize,
+            WHITE
+        );
         DrawText(std::format("grounded: {}", m_player.is_grounded() ? "yes" : "no").c_str(), 0, 100, textsize, WHITE);
         DrawText(std::format("state: {}", stringify_state(m_player.get_state())).c_str(), 0, 150, textsize, WHITE);
     }
