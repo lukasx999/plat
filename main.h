@@ -7,7 +7,6 @@
 #include <raymath.h>
 
 #define DEBUG
-#define DEBUG_COLLISIONS
 
 static constexpr int WIDTH = 1600;
 static constexpr int HEIGHT = 900;

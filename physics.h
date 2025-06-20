@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <print>
 #include <span>
 
 #include <raylib.h>
@@ -103,7 +104,6 @@ public:
                 m_position.x += m_movement_speed * m_get_dt();
                 break;
         }
-
     }
 
     [[nodiscard]] Rectangle get_hitbox() const {
@@ -133,7 +133,6 @@ public:
                 handle_collision_right(hitbox, clip, delta_hor);
                 handle_collision_top(hitbox, clip, delta_hor, delta_ver);
                 handle_collision_bottom(hitbox, delta_ver);
-
             }
 
         }
@@ -146,9 +145,10 @@ private:
         if (CheckCollisionRecs(get_hitbox(), hitbox))
             handler();
 
-        // #ifdef DEBUG_COLLISIONS
+        #ifdef DEBUG
         DrawRectangleRec(hitbox, PURPLE);
-        // #endif // DEBUG_COLLISIONS
+        #endif // DEBUG
+
     }
 
     void handle_collision_top(Rectangle hitbox, float clip, float delta_hor, float delta_ver) {
@@ -170,7 +170,7 @@ private:
         });
     }
 
-    void handle_collision_bottom(const Rectangle hitbox, const float delta_ver) {
+    void handle_collision_bottom(Rectangle hitbox, float delta_ver) {
         Rectangle rect = {
             hitbox.x,
             hitbox.y + hitbox.height,

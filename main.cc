@@ -29,7 +29,22 @@ public:
     void draw() const {
         draw_environment(m_items);
         m_player.draw();
+
+        #ifdef DEBUG
+        draw_debug_info();
+        #endif // DEBUG
     }
+
+    #ifdef DEBUG
+    void draw_debug_info() const {
+        float textsize = 50;
+        auto pos = m_player.get_position();
+        DrawText(std::format("pos: x: {}, y: {}", trunc(pos.x), trunc(pos.y)).c_str(), 0, 0, textsize, WHITE);
+        DrawText(std::format("speed: {}:", trunc(m_player.get_speed())).c_str(), 0, 50, textsize, WHITE);
+        DrawText(std::format("grounded: {}", m_player.is_grounded() ? "yes" : "no").c_str(), 0, 100, textsize, WHITE);
+        DrawText(std::format("state: {}", stringify_state(m_player.get_state())).c_str(), 0, 150, textsize, WHITE);
+    }
+    #endif // DEBUG
 
 private:
     [[nodiscard]] constexpr static std::array<Item, 4> init_env() {
@@ -78,11 +93,12 @@ int main() {
         BeginDrawing();
         {
             ClearBackground(BLACK);
-            game.update();
             game.draw();
+            game.update();
         }
         EndDrawing();
     }
+
     CloseWindow();
 
     return EXIT_SUCCESS;

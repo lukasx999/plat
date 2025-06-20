@@ -8,7 +8,6 @@
 #include <raylib.h>
 #include <raymath.h>
 
-#include "main.h"
 #include "physics.h"
 
 class Player : public PhysicsEntity {
@@ -87,7 +86,6 @@ public:
         #ifdef DEBUG
         DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
         draw_debug_spritesheet();
-        draw_debug_info();
         #endif // DEBUG
     }
 
@@ -103,14 +101,6 @@ private:
             m_tex_origin.height,
         };
         DrawRectangleLinesEx(rect, 1, RED);
-    }
-
-    void draw_debug_info() const {
-        float textsize = 50;
-        DrawText(std::format("pos: x: {}, y: {}", trunc(get_position().x), trunc(get_position().y)).c_str(), 0, 0, textsize, WHITE);
-        DrawText(std::format("speed: {}:", trunc(get_speed())).c_str(), 0, 50, textsize, WHITE);
-        DrawText(std::format("grounded: {}", is_grounded() ? "yes" : "no").c_str(), 0, 100, textsize, WHITE);
-        DrawText(std::format("state: {}", stringify_state(get_state())).c_str(), 0, 150, textsize, WHITE);
     }
     #endif // DEBUG
 
