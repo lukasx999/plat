@@ -7,7 +7,7 @@
 
 static constexpr auto WIDTH = 1600;
 static constexpr auto HEIGHT = 900;
-#undef DEBUG
+#define DEBUG
 #define DEBUG_COLLISIONS
 
 struct Item {
@@ -52,24 +52,24 @@ auto stringify_state(EntityState state) {
 }
 
 class PhysicsEntity {
-    Vector2 m_position;
     float m_width = 0;
     float m_height = 0;
-    float m_speed = 0;
-    bool m_is_grounded = false;
     const std::function<float()> m_get_dt;
     static constexpr int m_gravity = 1000;
     static constexpr float m_movement_speed = 500;
-    static constexpr float m_jumping_speed = 900;
+    static constexpr float m_jumping_speed = 700;
     EntityState m_new_state = EntityState::Idle;
 
 public:
+    Vector2 m_position;
+    float m_speed = 0;
+    bool m_is_grounded = false;
     MovementDirection m_direction = MovementDirection::Right;
     EntityState m_state = EntityState::Idle;
 
     PhysicsEntity(Vector2 position, std::function<float()> get_dt)
-        : m_position(position)
-        , m_get_dt(get_dt)
+        : m_get_dt(get_dt)
+        , m_position(position)
     { }
 
     void set_width(float width) {
@@ -231,33 +231,32 @@ private:
 
 };
 
-// TODO: remove sprite view
 class SpriteAnimation {
     int m_idx = 0;
     const float m_delay_secs;
-    const std::span<const Rectangle> m_sprites;
+    const int m_max;
 
 public:
-    SpriteAnimation(std::span<const Rectangle> sprites, float delay_secs)
+    SpriteAnimation(float delay_secs, int max)
         : m_delay_secs(delay_secs)
-        , m_sprites(sprites)
+        , m_max(max)
     { }
 
     void reset() {
         m_idx = 0;
     }
 
-    [[nodiscard]] Rectangle get() const {
-        return m_sprites[m_idx];
+    [[nodiscard]] int get() const {
+        return m_idx;
     }
 
-    Rectangle next() {
+    int next() {
         static float fut = 0;
 
         if (GetTime() > fut) {
             fut = GetTime() + m_delay_secs;
             m_idx++;
-            m_idx %= m_sprites.size();
+            m_idx %= m_max;
         }
 
         return get();
@@ -270,7 +269,7 @@ class Player : public PhysicsEntity {
     Rectangle m_tex_origin;
     const Texture2D m_tex;
     static constexpr float m_texture_scale = 5;
-    static constexpr const char *m_tex_path = "./assets/sprites/knight.png";
+    static constexpr auto m_tex_path = "./assets/sprites/knight.png";
     static constexpr std::array m_sprites_idle {
         Rectangle { 9, 9, 13, 19 },
         Rectangle { 41, 10, 13, 18 },
@@ -304,8 +303,8 @@ public:
         : PhysicsEntity(position, get_dt)
         , m_tex_origin(m_sprites_idle[0])
         , m_tex(LoadTexture(m_tex_path))
-        , m_spritesheet_idle(m_sprites_idle, 0.2)
-        , m_spritesheet_running(m_sprites_running, 0.1)
+        , m_spritesheet_idle(0.2, m_sprites_idle.size())
+        , m_spritesheet_running(0.1, m_sprites_running.size())
     { }
 
     void update() override {
@@ -316,17 +315,17 @@ public:
 
         switch (m_state) {
             case EntityState::MovingLeft:
-                m_tex_origin = m_spritesheet_running.next();
+                m_tex_origin = m_sprites_running[m_spritesheet_running.next()];
                 m_spritesheet_idle.reset();
                 break;
 
             case EntityState::MovingRight:
-                m_tex_origin = m_spritesheet_running.next();
+                m_tex_origin = m_sprites_running[m_spritesheet_running.next()];
                 m_spritesheet_idle.reset();
                 break;
 
             case EntityState::Idle:
-                m_tex_origin = m_spritesheet_idle.next();
+                m_tex_origin = m_sprites_idle[m_spritesheet_idle.next()];
                 m_spritesheet_running.reset();
                 break;
         }
@@ -338,19 +337,11 @@ public:
         if (m_direction == MovementDirection::Left)
             origin.width *= -1;
         DrawTexturePro(m_tex, origin, get_hitbox(), { 0, 0 }, 0, WHITE);
-        DrawText(std::format("state: {}", stringify_state(m_state)).c_str(), 0, 50, 50, WHITE);
+
+        DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
 
 #ifdef DEBUG
         DrawTexture(m_tex, WIDTH-m_tex.width, 0, WHITE);
-        for (auto &sprite : m_sprites_running) {
-            Rectangle rect = {
-                sprite.x+(WIDTH-m_tex.width),
-                sprite.y,
-                sprite.width,
-                sprite.height,
-            };
-            DrawRectangleLinesEx(rect, 1, BLUE);
-        }
 
         Rectangle rect = {
             m_tex_origin.x+(WIDTH-m_tex.width),
@@ -360,13 +351,18 @@ public:
         };
         DrawRectangleLinesEx(rect, 1, RED);
 
-        DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
+        draw_debug_text();
 
-        // DrawText(std::format("pos: x: {}, y: {}", trunc(m_position.x), trunc(m_position.y)).c_str(), 0, 0, 50, WHITE);
-        // DrawText(std::format("speed: {}:", trunc(m_speed)).c_str(), 0, 50, 50, WHITE);
-        // DrawText(std::format("grounded: {}", m_is_grounded ? "yes" : "no").c_str(), 0, 100, 50, WHITE);
 #endif // DEBUG
 
+    }
+
+    void draw_debug_text() const {
+        float textsize = 50;
+        DrawText(std::format("pos: x: {}, y: {}", trunc(m_position.x), trunc(m_position.y)).c_str(), 0, 0, textsize, WHITE);
+        DrawText(std::format("speed: {}:", trunc(m_speed)).c_str(), 0, 50, textsize, WHITE);
+        DrawText(std::format("grounded: {}", m_is_grounded ? "yes" : "no").c_str(), 0, 100, textsize, WHITE);
+        DrawText(std::format("state: {}", stringify_state(m_state)).c_str(), 0, 150, textsize, WHITE);
     }
 
 };
