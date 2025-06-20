@@ -22,14 +22,14 @@ public:
 
     [[nodiscard]] constexpr static std::array<Item, 4> init_env() {
         int floor_height = 200;
-        Item floor{ { 0.0f, static_cast<float>(HEIGHT-floor_height), WIDTH, static_cast<float>(floor_height) }, GRAY, true, "floor" };
-        Item bg{ { 0, 0, WIDTH, HEIGHT }, DARKGRAY, false, "bg" };
+        Item floor{ { 0.0f, static_cast<float>(HEIGHT-floor_height), WIDTH, static_cast<float>(floor_height) }, GRAY, true};
+        Item bg{ { 0, 0, WIDTH, HEIGHT }, DARKGRAY, false };
 
         return {
             bg,
             floor,
-            Item({ 300, 300, 300, 300 }, RED, true, "red"),
-            Item({ 1100, 600, 300, 100 }, GREEN, true, "green")
+            Item({ 300, 300, 300, 300 }, RED, true),
+            Item({ 1100, 600, 300, 100 }, GREEN, true)
         };
     }
 

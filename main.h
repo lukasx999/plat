@@ -16,13 +16,11 @@ struct Item {
     const Rectangle m_hitbox;
     const Color m_color;
     const bool m_is_blocking;
-    const std::string m_name;
 
-    Item(Rectangle hitbox, Color color, bool is_blocking, std::string_view name)
+    Item(Rectangle hitbox, Color color, bool is_blocking)
         : m_hitbox(hitbox)
         , m_color(color)
         , m_is_blocking(is_blocking)
-        , m_name(name)
     { }
 
 };
