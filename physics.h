@@ -54,7 +54,7 @@ public:
         return cooldown_over && any_dashes_left;
     }
 
-    void dash() {
+    void start() {
         m_dash_count--;
         m_dash_time = GetTime() + m_dash_duration_secs;
     }
@@ -145,7 +145,7 @@ public:
         if (!m_dash.can_dash()) return;
 
         m_speed.x = m_dashing_speed;
-        m_dash.dash();
+        m_dash.start();
 
         if (m_direction == MovementDirection::Left)
             m_speed.x *= -1;
