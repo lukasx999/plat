@@ -75,11 +75,14 @@ private:
     }
     #endif // DEBUG
 
-
     void handle_input(Player &player) {
 
         if (IsKeyPressed(KEY_SPACE)) {
             player.jump();
+        }
+
+        if (IsKeyPressed(KEY_LEFT_SHIFT)) {
+            player.dash();
         }
 
         if (IsKeyDown(KEY_D)) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <functional>
 #include <print>
 #include <span>
@@ -44,7 +45,6 @@ class PhysicsEntity {
     static constexpr float m_jumping_speed = 700;
 
 public:
-
     PhysicsEntity(Vector2 position, float width, float height, std::function<float()> get_dt)
         : m_position(position)
         , m_get_dt(get_dt)
@@ -85,6 +85,11 @@ public:
 
     }
 
+    virtual void dash() {
+        // TODO:
+        assert(!"TODO");
+    }
+
     virtual void jump() {
         if (!m_is_grounded) return;
         m_speed = -m_jumping_speed;
@@ -115,7 +120,7 @@ public:
         };
     }
 
-    virtual void resolve_collisions(std::span<const Item> items) {
+    void resolve_collisions(std::span<const Item> items) {
         m_is_grounded = false;
 
         for (const auto &item : items) {
