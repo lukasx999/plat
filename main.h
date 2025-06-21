@@ -6,7 +6,7 @@
 #include <raylib.h>
 #include <raymath.h>
 
-#undef DEBUG
+#define DEBUG
 
 static constexpr int WIDTH = 1600;
 static constexpr int HEIGHT = 900;

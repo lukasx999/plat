@@ -153,7 +153,9 @@ private:
 
 int main() {
 
-    // SetTraceLogLevel(LOG_ERROR);
+    #ifndef DEBUG
+    SetTraceLogLevel(LOG_ERROR);
+    #endif // DEBUG
     SetTargetFPS(60);
     InitWindow(WIDTH, HEIGHT, "platformer");
 

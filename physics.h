@@ -68,6 +68,7 @@ public:
 };
 
 class PhysicsEntity {
+    Dash m_dash;
     Vector2 m_position;
     Vector2 m_speed;
     bool m_is_grounded = false;
@@ -75,7 +76,6 @@ class PhysicsEntity {
     EntityState m_new_state = EntityState::Idle;
     EntityState m_state = EntityState::Idle;
     int m_jump_count = 0;
-    Dash m_dash;
     const float m_width;
     const float m_height;
     static constexpr int m_max_jumps = 2;
@@ -136,6 +136,7 @@ public:
         if (m_dash.has_ended()) {
             m_speed.x = 0;
         } else {
+            // dont drag the player down while dashing
             m_speed.y = 0;
         }
 
@@ -143,7 +144,7 @@ public:
 
     virtual void dash() {
 
-        // avoid players spamming the dash button
+        // stop players from spamming the dash button
         if (!m_dash.can_dash()) return;
 
         m_speed.x = m_dashing_speed;

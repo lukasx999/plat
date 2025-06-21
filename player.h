@@ -10,6 +10,8 @@
 
 #include "physics.h"
 
+
+
 class Player : public PhysicsEntity {
     Rectangle m_tex_origin;
     const Texture2D m_tex;
@@ -81,7 +83,6 @@ public:
             origin.width *= -1;
 
         DrawTexturePro(m_tex, origin, get_hitbox(), { 0, 0 }, 0, WHITE);
-
 
         #ifdef DEBUG
         DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
