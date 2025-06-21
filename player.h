@@ -44,8 +44,8 @@ class Player : public PhysicsEntity {
     };
 
 public:
-    Player(Vector2 position, std::function<float()> get_dt)
-        : PhysicsEntity(position, 14*m_texture_scale, 19*m_texture_scale, get_dt)
+    Player(Vector2 position)
+        : PhysicsEntity(position, 14*m_texture_scale, 19*m_texture_scale)
         , m_tex_origin(m_sprites_idle[0])
         , m_tex(LoadTexture(m_tex_path))
         , m_spritesheet_idle(0.2, m_sprites_idle.size(), GetTime)

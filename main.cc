@@ -54,7 +54,7 @@ class Game {
 
 public:
     Game()
-    : m_player({ WIDTH/2.0f, HEIGHT - 500 }, GetFrameTime)
+    : m_player({ WIDTH/2.0f, HEIGHT - 500 })
     { }
 
     void update() {

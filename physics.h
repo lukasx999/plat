@@ -74,7 +74,6 @@ class PhysicsEntity {
     EntityState m_state = EntityState::Idle;
     int m_jump_count = 0;
     Dash m_dash;
-    const std::function<float()> m_get_dt;
     const float m_width;
     const float m_height;
     static constexpr int m_max_jumps = 2;
@@ -84,9 +83,8 @@ class PhysicsEntity {
     static constexpr float m_dashing_speed = 2000;
 
 public:
-    PhysicsEntity(Vector2 position, float width, float height, std::function<float()> get_dt)
+    PhysicsEntity(Vector2 position, float width, float height)
         : m_position(position)
-        , m_get_dt(get_dt)
         , m_width(width)
         , m_height(height)
     { }
@@ -165,12 +163,12 @@ public:
         switch (direction) {
             case MovementDirection::Left:
                 m_new_state = EntityState::MovingLeft;
-                m_position.x -= m_movement_speed * m_get_dt();
+                m_position.x -= m_movement_speed * GetFrameTime();
                 break;
 
             case MovementDirection::Right:
                 m_new_state = EntityState::MovingRight;
-                m_position.x += m_movement_speed * m_get_dt();
+                m_position.x += m_movement_speed * GetFrameTime();
                 break;
         }
     }
@@ -191,8 +189,8 @@ public:
             if (item.m_is_blocking) {
 
                 auto hitbox = item.m_hitbox;
-                float delta_ver = m_speed.y * m_get_dt();
-                float delta_hor = std::abs(m_speed.x) * m_get_dt();
+                float delta_ver = m_speed.y * GetFrameTime();
+                float delta_hor = std::abs(m_speed.x) * GetFrameTime();
                 // let the player clip a bit into the floor when grounded, to prevent
                 // oscillation of grounding state
                 // also prevent the player from teleporting down after walking off a ledge
@@ -210,11 +208,11 @@ public:
 
 private:
     void update_position() {
-        m_position = Vector2Add(m_position, Vector2Scale(m_speed, m_get_dt()));
+        m_position += m_speed * GetFrameTime();
     }
 
     void apply_gravity() {
-        m_speed.y += m_gravity * m_get_dt();
+        m_speed.y += m_gravity * GetFrameTime();
     }
 
     void handle_collision(Rectangle hitbox, std::function<void()> handler) {

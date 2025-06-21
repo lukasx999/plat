@@ -11,7 +11,7 @@
 static constexpr int WIDTH = 1600;
 static constexpr int HEIGHT = 900;
 
-#define DBG(x) std::println("{}: {}", #x, (x))
+#define PRINT(x) std::println("{}: {}", #x, (x))
 
 struct Item {
     const Rectangle m_hitbox;
