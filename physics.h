@@ -193,7 +193,6 @@ public:
                 auto hitbox = item.m_hitbox;
                 float delta_ver = m_speed.y * m_get_dt();
                 float delta_hor = std::abs(m_speed.x) * m_get_dt();
-                // float delta_hor = m_speed.x * m_get_dt();
                 // let the player clip a bit into the floor when grounded, to prevent
                 // oscillation of grounding state
                 // also prevent the player from teleporting down after walking off a ledge
