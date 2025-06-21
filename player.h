@@ -13,7 +13,7 @@
 class Player : public PhysicsEntity {
     Rectangle m_tex_origin;
     const Texture2D m_tex;
-    static constexpr float m_texture_scale = 5;
+    static constexpr float m_texture_scale = 10;
     static constexpr auto m_tex_path = "./assets/sprites/knight.png";
     static constexpr std::array m_sprites_idle {
         Rectangle { 9, 9, 13, 19 },

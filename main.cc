@@ -42,7 +42,7 @@ private:
             left_wall,
             right_wall,
             Item({ 300, 300, 300, 300 }, RED, true),
-            Item({ 1100, 600, 300, 100 }, GREEN, true)
+            Item({ 1100, 700, 300, 100 }, GREEN, true)
         };
     }
 };

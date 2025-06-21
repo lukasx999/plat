@@ -33,7 +33,7 @@ auto stringify_state(EntityState state) {
 class Dash {
     int m_dash_count = 0;
     float m_dash_time = 0;
-    static constexpr float m_dash_cooldown_secs = 0.5;
+    static constexpr float m_dash_cooldown_secs = 0.2;
     static constexpr float m_dash_duration_secs = 0.1;
     static constexpr int m_max_dashes = 2;
 
@@ -192,7 +192,8 @@ public:
 
                 auto hitbox = item.m_hitbox;
                 float delta_ver = m_speed.y * m_get_dt();
-                float delta_hor = m_movement_speed * m_get_dt();
+                float delta_hor = std::abs(m_speed.x) * m_get_dt();
+                // float delta_hor = m_speed.x * m_get_dt();
                 // let the player clip a bit into the floor when grounded, to prevent
                 // oscillation of grounding state
                 // also prevent the player from teleporting down after walking off a ledge
@@ -200,7 +201,7 @@ public:
 
                 handle_collision_left(hitbox, clip, delta_hor);
                 handle_collision_right(hitbox, clip, delta_hor);
-                handle_collision_top(hitbox, clip, delta_hor, delta_ver);
+                handle_collision_top(hitbox, clip, delta_ver);
                 handle_collision_bottom(hitbox, delta_ver);
             }
 
@@ -228,18 +229,9 @@ private:
 
     }
 
-    void handle_collision_top(Rectangle hitbox, float clip, float delta_hor, float delta_ver) {
+    void handle_collision_top(Rectangle hitbox, float clip, float delta_ver) {
 
-        float top_delta_mult_factor = 1.3;
-        Rectangle rect = {
-            // remove some padding from each edge to prevent
-            // instant teleportation when jumping up and edge
-            // and moving to the right
-            hitbox.x + delta_hor*top_delta_mult_factor,
-            hitbox.y - delta_ver,
-            hitbox.width - delta_hor*top_delta_mult_factor*2,
-            delta_ver,
-        };
+        Rectangle rect { hitbox.x, hitbox.y - delta_ver, hitbox.width, delta_ver };
 
         handle_collision(rect, [&] {
             m_is_grounded = true;
@@ -248,18 +240,10 @@ private:
     }
 
     void handle_collision_bottom(Rectangle hitbox, float delta_ver) {
-        Rectangle rect = {
-            hitbox.x,
-            hitbox.y + hitbox.height,
-            hitbox.width,
-            // when the player bumps their head by jumping, the
-            // speed is negative, therefore it must be inverted
-            -delta_ver,
-        };
-
-        handle_collision(rect, [&] {
-            m_speed.y = 0;
-        });
+        // when the player bumps their head by jumping, the
+        // speed is negative, therefore delta_ver must be inverted
+        Rectangle rect { hitbox.x, hitbox.y + hitbox.height, hitbox.width, -delta_ver };
+        handle_collision(rect, [&] { m_speed.y = 0; });
     }
 
     void handle_collision_left(Rectangle hitbox, float clip, float delta_hor) {
@@ -268,7 +252,7 @@ private:
             hitbox.x - delta_hor,
             hitbox.y + clip,
             delta_hor,
-            hitbox.height - clip*2,
+            hitbox.height - clip,
         };
 
         handle_collision(rect, [&] {
@@ -283,7 +267,7 @@ private:
             hitbox.x + hitbox.width,
             hitbox.y + clip,
             delta_hor,
-            hitbox.height - clip*2,
+            hitbox.height - clip,
         };
 
         handle_collision(rect, [&] {
