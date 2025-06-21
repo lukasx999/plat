@@ -6,7 +6,7 @@
 #include <raylib.h>
 #include <raymath.h>
 
-#define DEBUG
+#undef DEBUG
 
 static constexpr int WIDTH = 1600;
 static constexpr int HEIGHT = 900;
@@ -15,13 +15,17 @@ static constexpr int HEIGHT = 900;
 
 struct Item {
     const Rectangle m_hitbox;
-    const Color m_color;
+    const Rectangle m_tex_origin;
     const bool m_is_blocking;
 
-    Item(Rectangle hitbox, Color color, bool is_blocking)
+    Item(Rectangle hitbox, Rectangle tex_origin, bool is_blocking)
         : m_hitbox(hitbox)
-        , m_color(color)
+        , m_tex_origin(tex_origin)
         , m_is_blocking(is_blocking)
+    { }
+
+    Item(Rectangle hitbox, Rectangle tex_origin)
+    : Item(hitbox, tex_origin, true)
     { }
 
 };

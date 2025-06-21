@@ -10,6 +10,8 @@
 
 #include "main.h"
 
+
+
 enum class MovementDirection { Left, Right };
 
 enum class EntityState {
@@ -191,6 +193,7 @@ public:
                 auto hitbox = item.m_hitbox;
                 float delta_ver = m_speed.y * GetFrameTime();
                 float delta_hor = std::abs(m_speed.x) * GetFrameTime();
+
                 // let the player clip a bit into the floor when grounded, to prevent
                 // oscillation of grounding state
                 // also prevent the player from teleporting down after walking off a ledge

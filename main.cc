@@ -13,36 +13,70 @@
 class Environment {
     // TODO: maybe replace vector with array
     const std::vector<Item> m_items = init_env();
+    const Texture2D m_tex_grass;
+    const Texture2D m_tex_background;
+    static constexpr Rectangle m_tex_grass_origin { 0, 0, 16, 16 };
+    static constexpr Rectangle m_tex_dirt_origin { 0, 16, 16, 16 };
 
 public:
+    Environment()
+        : m_tex_grass(LoadTexture("./assets/sprites/world_tileset.png"))
+        , m_tex_background(LoadTexture("./assets/background.png"))
+    { }
+
     [[nodiscard]] std::span<const Item> get_items() const {
         return m_items;
     }
 
     void draw() const {
+        DrawTexture(m_tex_background, 0, 0, WHITE);
         for (const auto &item : m_items) {
-            DrawRectangleRec(item.m_hitbox, item.m_color);
+            DrawTexturePro(m_tex_grass, item.m_tex_origin, item.m_hitbox, { 0, 0 }, 0, WHITE);
+            #ifdef DEBUG
+            DrawRectangleLinesEx(item.m_hitbox, 1, RED);
+            #endif // DEBUG
         }
     }
 
 private:
-    [[nodiscard]] static constexpr std::vector<Item> init_env() {
-        float wall_size = 100;
-        Item bg({ 0, 0, WIDTH, HEIGHT }, DARKGRAY, false);
-        Item floor({ 0, HEIGHT - wall_size, WIDTH, wall_size }, GRAY, true);
-        Item ceil({ 0, 0, WIDTH, wall_size }, GRAY, true);
-        Item left_wall({ 0, wall_size, wall_size, HEIGHT-wall_size*2 }, GRAY, true);
-        Item right_wall({ WIDTH-wall_size, wall_size, wall_size, HEIGHT-wall_size*2 }, GRAY, true);
+    static void gen_floor(std::vector<Item> &items, float block_size) {
+        for (int i=0; i < WIDTH/block_size; ++i) {
+            items.push_back(Item(
+                { i*block_size, HEIGHT - block_size, block_size, block_size },
+                m_tex_grass_origin
+            ));
+        }
+    }
 
-        return {
-            bg,
-            ceil,
-            floor,
-            left_wall,
-            right_wall,
-            Item({ 300, 300, 300, 300 }, RED, true),
-            Item({ 1100, 700, 300, 100 }, GREEN, true)
-        };
+    [[nodiscard]] static std::vector<Item> init_env() {
+
+        float block_size = 75;
+        std::vector<Item> items;
+
+        gen_floor(items, block_size);
+
+        Vector2 start = { 500, 500 };
+        items.push_back(Item(
+            { start.x, start.y, block_size, block_size },
+            m_tex_grass_origin
+        ));
+
+        items.push_back(Item(
+            { start.x+block_size, start.y, block_size, block_size },
+            m_tex_grass_origin
+        ));
+
+        items.push_back(Item(
+            { start.x, start.y+block_size, block_size, block_size },
+            m_tex_dirt_origin
+        ));
+
+        items.push_back(Item(
+            { start.x+block_size, start.y+block_size, block_size, block_size },
+            m_tex_dirt_origin
+        ));
+
+        return items;
     }
 };
 
@@ -119,7 +153,7 @@ private:
 
 int main() {
 
-    SetTraceLogLevel(LOG_ERROR);
+    // SetTraceLogLevel(LOG_ERROR);
     SetTargetFPS(60);
     InitWindow(WIDTH, HEIGHT, "platformer");
 
