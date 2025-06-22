@@ -14,14 +14,12 @@ class Environment {
     // TODO: maybe replace vector with array
     const std::vector<Item> m_items = init_env();
     const Texture2D m_tex_grass;
-    const Texture2D m_tex_background;
     static constexpr Rectangle m_tex_grass_origin { 0, 0, 16, 16 };
     static constexpr Rectangle m_tex_dirt_origin { 0, 16, 16, 16 };
 
 public:
     Environment()
         : m_tex_grass(LoadTexture("./assets/sprites/world_tileset.png"))
-        , m_tex_background(LoadTexture("./assets/background.png"))
     { }
 
     [[nodiscard]] std::span<const Item> get_items() const {
@@ -29,7 +27,9 @@ public:
     }
 
     void draw() const {
-        DrawTexture(m_tex_background, 0, 0, WHITE);
+
+        DrawRectangle(0, 0, WIDTH, HEIGHT, DARKGRAY);
+
         for (const auto &item : m_items) {
             DrawTexturePro(m_tex_grass, item.m_tex_origin, item.m_hitbox, { 0, 0 }, 0, WHITE);
             #ifdef DEBUG
