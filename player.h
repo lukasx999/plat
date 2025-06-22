@@ -87,8 +87,11 @@ public:
     }
 
     void draw_debug_ui() const {
-        DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
         draw_debug_spritesheet();
+    }
+
+    void draw_hitbox() const {
+        DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
     }
 
 private:

@@ -88,6 +88,7 @@ private:
 class Game {
     Player m_player;
     Environment m_env;
+    static constexpr float m_scroll_factor = 0.1;
 
 public:
     // TODO: make private
@@ -100,7 +101,7 @@ public:
 
     void update() {
         m_cam.target = m_player.get_position();
-        handle_input(m_player);
+        handle_input();
         m_player.resolve_collisions(m_env.get_items());
         m_player.update();
     }
@@ -115,6 +116,7 @@ public:
     void draw_world() const {
         m_env.draw();
         m_player.draw();
+        m_player.draw_hitbox();
     }
 
 private:
@@ -141,24 +143,31 @@ private:
     }
     #endif // DEBUG
 
-    void handle_input(Player &player) {
+    void handle_input() {
 
         if (IsKeyPressed(KEY_SPACE)) {
-            player.jump();
+            m_player.jump();
         }
 
         if (IsKeyPressed(KEY_LEFT_SHIFT)) {
-            player.dash();
+            m_player.dash();
         }
 
         if (IsKeyDown(KEY_D)) {
-            player.move(MovementDirection::Right);
+            m_player.move(MovementDirection::Right);
         }
 
         if (IsKeyDown(KEY_A)) {
-            player.move(MovementDirection::Left);
+            m_player.move(MovementDirection::Left);
         }
 
+        handle_zoom();
+
+    }
+
+    void handle_zoom() {
+        m_cam.zoom += GetMouseWheelMove() * m_scroll_factor;
+        m_cam.zoom = std::max(m_cam.zoom, 0.0f);
     }
 
 };

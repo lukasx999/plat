@@ -178,8 +178,8 @@ public:
 
     [[nodiscard]] Rectangle get_hitbox() const {
         return {
-            m_position.x - m_width/2.0f,
-            m_position.y - m_height/2.0f,
+            m_position.x - m_width  / 2.0f,
+            m_position.y - m_height / 2.0f,
             m_width,
             m_height,
         };
@@ -225,7 +225,8 @@ private:
             handler();
 
         #ifdef DEBUG
-        DrawRectangleRec(hitbox, PURPLE);
+        // TODO:
+        // DrawRectangleRec(hitbox, PURPLE);
         #endif // DEBUG
 
     }
