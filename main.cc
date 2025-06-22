@@ -30,8 +30,12 @@ public:
 
         DrawRectangle(0, 0, WIDTH, HEIGHT, DARKGRAY);
 
+
         for (const auto &item : m_items) {
-            DrawTexturePro(m_tex_grass, item.m_tex_origin, item.m_hitbox, { 0, 0 }, 0, WHITE);
+            auto hitbox = item.m_hitbox;
+            // TODO:
+            // hitbox.x += std::fmod(std::lerp(0, 100, GetTime()), 100);
+            DrawTexturePro(m_tex_grass, item.m_tex_origin, hitbox, { 0, 0 }, 0, WHITE);
             #ifdef DEBUG
             DrawRectangleLinesEx(item.m_hitbox, 1, RED);
             #endif // DEBUG
@@ -86,23 +90,31 @@ class Game {
     Environment m_env;
 
 public:
+    // TODO: make private
+    Camera2D m_cam;
+
     Game()
-    : m_player({ WIDTH/2.0f, HEIGHT - 500 })
+        : m_player({ WIDTH/2.0f, HEIGHT - 500 })
+        , m_cam({ WIDTH/2.0f, HEIGHT/2.0f }, Vector2Zero(), 0, 1)
     { }
 
     void update() {
+        m_cam.target = m_player.get_position();
         handle_input(m_player);
         m_player.resolve_collisions(m_env.get_items());
         m_player.update();
     }
 
-    void draw() const {
-        m_env.draw();
-        m_player.draw();
-
+    void draw_hud() const {
         #ifdef DEBUG
         draw_debug_info();
+        m_player.draw_debug_ui();
         #endif // DEBUG
+    }
+
+    void draw_world() const {
+        m_env.draw();
+        m_player.draw();
     }
 
 private:
@@ -165,7 +177,12 @@ int main() {
         BeginDrawing();
         {
             ClearBackground(BLACK);
-            game.draw();
+            BeginMode2D(game.m_cam);
+            {
+                game.draw_world();
+            }
+            EndMode2D();
+            game.draw_hud();
             game.update();
         }
         EndDrawing();

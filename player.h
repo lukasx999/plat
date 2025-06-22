@@ -84,14 +84,14 @@ public:
 
         DrawTexturePro(m_tex, origin, get_hitbox(), { 0, 0 }, 0, WHITE);
 
-        #ifdef DEBUG
+    }
+
+    void draw_debug_ui() const {
         DrawRectangleLinesEx(get_hitbox(), 1, BLACK);
         draw_debug_spritesheet();
-        #endif // DEBUG
     }
 
 private:
-    #ifdef DEBUG
     void draw_debug_spritesheet() const {
         DrawTexture(m_tex, WIDTH-m_tex.width, 0, WHITE);
 
@@ -103,6 +103,5 @@ private:
         };
         DrawRectangleLinesEx(rect, 1, RED);
     }
-    #endif // DEBUG
 
 };
