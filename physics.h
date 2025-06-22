@@ -155,6 +155,8 @@ public:
     }
 
     virtual void jump() {
+        // TODO: scale jump intensity with duration of button press
+        // BUG: all jumps available when walking off ledge
         if (!m_jump_count) return;
         m_jump_count--;
         m_speed.y = -m_jumping_speed;

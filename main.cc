@@ -89,6 +89,7 @@ class Game {
     Player m_player;
     Environment m_env;
     static constexpr float m_scroll_factor = 0.1;
+    static constexpr float m_camera_follow_factor = 1;
 
 public:
     // TODO: make private
@@ -96,11 +97,11 @@ public:
 
     Game()
         : m_player({ WIDTH/2.0f, HEIGHT - 500 })
-        , m_cam({ WIDTH/2.0f, HEIGHT/2.0f }, Vector2Zero(), 0, 1)
+        , m_cam({ WIDTH/2.0f, HEIGHT/2.0f }, m_player.get_position(), 0, 1)
     { }
 
     void update() {
-        m_cam.target = m_player.get_position();
+        update_camera();
         handle_input();
         m_player.resolve_collisions(m_env.get_items());
         m_player.update();
@@ -120,7 +121,13 @@ public:
     }
 
 private:
-    #ifdef DEBUG
+    void update_camera() {
+        auto diff = m_player.get_position() - m_cam.target;
+        float len = Vector2Length(diff);
+        float speed = len * m_camera_follow_factor * GetFrameTime();
+        m_cam.target += Vector2Normalize(diff) * speed;
+    }
+
     void draw_debug_info() const {
         auto pos      = m_player.get_position();
         auto speed    = m_player.get_speed();
@@ -141,7 +148,6 @@ private:
         float textsize = 50;
         DrawText(text.c_str(), 0, idx*textsize, textsize, WHITE);
     }
-    #endif // DEBUG
 
     void handle_input() {
 
