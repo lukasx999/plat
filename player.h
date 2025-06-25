@@ -54,8 +54,7 @@ public:
         , m_spritesheet_running(0.1, m_sprites_running.size(), GetTime)
     { }
 
-    void update() override {
-        PhysicsEntity::update();
+    void on_update() override {
 
         switch (get_state()) {
             case EntityState::MovingLeft:

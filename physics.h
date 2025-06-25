@@ -119,7 +119,7 @@ public:
         return m_dash.dash_count();
     }
 
-    virtual void update() {
+    void update() {
         m_state = m_new_state;
         m_new_state = EntityState::Idle;
 
@@ -140,7 +140,9 @@ public:
             m_speed.y = 0;
         }
 
+        on_update();
     }
+
 
     virtual void dash() {
 
@@ -154,12 +156,14 @@ public:
             m_speed.x *= -1;
     }
 
-    virtual void jump() {
+    void jump() {
         // TODO: scale jump intensity with duration of button press
         // BUG: all jumps available when walking off ledge
         if (!m_jump_count) return;
         m_jump_count--;
         m_speed.y = -m_jumping_speed;
+
+        on_jump();
     }
 
     virtual void move(MovementDirection direction) {
@@ -213,6 +217,9 @@ public:
     }
 
 private:
+    virtual void on_jump() { }
+    virtual void on_update() { }
+
     void update_position() {
         m_position += m_speed * GetFrameTime();
     }
