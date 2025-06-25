@@ -4,7 +4,7 @@ LIBS=-lraylib
 
 DEPS=main.h player.h physics.h
 
-OBJ=main.o
+OBJ=main.o physics.o
 
 game: $(OBJ)
 	$(CXX) $(CXXFLAGS) $(LIBS) $^ -o $@
