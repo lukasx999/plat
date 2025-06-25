@@ -24,7 +24,6 @@ void PhysicsEntity::update() {
     on_update();
 }
 
-
 void PhysicsEntity::dash() {
 
     // stop players from spamming the dash button
