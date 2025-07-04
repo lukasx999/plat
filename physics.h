@@ -69,7 +69,7 @@ public:
 class PhysicsEntity {
     Dash m_dash;
     Vector2 m_position;
-    Vector2 m_speed;
+    Vector2 m_speed { };
     bool m_is_grounded = false;
     MovementDirection m_direction = MovementDirection::Right;
     EntityState m_new_state = EntityState::Idle;

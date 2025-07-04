@@ -1,5 +1,5 @@
 CXX=clang++
-CXXFLAGS=-Wall -Wextra -std=c++23 -pedantic -ggdb -Og
+CXXFLAGS=-Wall -Wextra -std=c++23 -pedantic -ggdb -Og -fsanitize=undefined
 LIBS=-lraylib
 
 DEPS=main.h player.h physics.h
