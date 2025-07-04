@@ -5,11 +5,14 @@ void PhysicsEntity::update() {
     m_new_state = EntityState::Idle;
 
     if (m_is_grounded) {
-        m_jump_count = m_max_jumps;
+        m_is_jumping = false;
+        m_jump_count = m_extra_jumps;
         m_dash.reset();
         m_speed.y = 0;
+
     } else {
         apply_gravity();
+
     }
 
     update_position();
@@ -39,12 +42,18 @@ void PhysicsEntity::dash() {
 }
 
 void PhysicsEntity::jump() {
-    // TODO: scale jump intensity with duration of button press
-    // BUG: all jumps available when walking off ledge
-    if (!m_jump_count) return;
-    m_jump_count--;
-    m_speed.y = -m_jumping_speed;
+    bool have_extra_jumps = m_jump_count;
 
+    if (m_is_grounded) {
+        m_is_jumping = true;
+
+    } else if (have_extra_jumps) {
+        m_jump_count--;
+
+    } else
+        return;
+
+    m_speed.y = -m_jumping_speed;
     on_jump();
 }
 

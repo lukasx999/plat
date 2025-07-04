@@ -74,10 +74,13 @@ class PhysicsEntity {
     MovementDirection m_direction = MovementDirection::Right;
     EntityState m_new_state = EntityState::Idle;
     EntityState m_state = EntityState::Idle;
+    // cannot simplify this to a jumpcount, because the first jump
+    // may only be used from the ground and not in the air
+    bool m_is_jumping = false;
     int m_jump_count = 0;
     const float m_width;
     const float m_height;
-    static constexpr int m_max_jumps = 2;
+    static constexpr int m_extra_jumps = 1;
     static constexpr int m_gravity = 1000;
     static constexpr float m_movement_speed = 500;
     static constexpr float m_jumping_speed = 700;
